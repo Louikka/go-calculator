@@ -9,14 +9,42 @@ import (
 	"unicode"
 )
 
-/* Tokens and constants ******************************************************/
+/* Types and constants *******************************************************/
+
+type TokenType string
+
+const (
+	TOKEN_TYPE_NUMBER      TokenType = "NUMBER"
+	TOKEN_TYPE_OPERATOR    TokenType = "OPERATOR"
+	TOKEN_TYPE_KEYWORD     TokenType = "KEYWORD"
+	TOKEN_TYPE_PUNCTUATION TokenType = "PUNCTUATION"
+)
 
 type Token struct {
-	Type  string
+	Type  TokenType
 	Value any
 }
 
-var ALLOWED_OPERATORS = []rune{'+', '-', '*', '/', '^'}
+/*
+type NumberToken struct {
+	Type  TokenType
+	Value float64
+}
+type OperatorToken struct {
+	Type  TokenType
+	Value rune
+}
+type KeywordToken struct {
+	Type  TokenType
+	Value string
+}
+type PunctuationToken struct {
+	Type  TokenType
+	Value rune
+}
+*/
+
+var ALLOWED_OPERATORS = []byte{'+', '-', '*', '/', '^'}
 
 var ALLOWED_KEYWORDS = []string{
 	// functions
@@ -25,16 +53,16 @@ var ALLOWED_KEYWORDS = []string{
 	"PI", "E", /* "TAU", "PHI", */
 }
 
-var ALLOWED_PUCTUATION = []rune{'(', ')'}
+var ALLOWED_PUCTUATION = []byte{'(', ')'}
 
 /* Custom string reader ******************************************************/
 
-type StringReader struct {
+type _StringReader struct {
 	s   string
 	pos uint
 }
 
-func (r *StringReader) Peek(offset int) (byte, error) {
+func (r *_StringReader) peek(offset int) (byte, error) {
 	newPos := int(r.pos) + offset
 
 	if newPos < 0 || newPos >= len(r.s) {
@@ -44,8 +72,9 @@ func (r *StringReader) Peek(offset int) (byte, error) {
 	return r.s[newPos], nil
 }
 
-func (r *StringReader) Next() (byte, error) {
+func (r *_StringReader) next() (byte, error) {
 	r.pos++
+
 	if r.pos >= uint(len(r.s)) {
 		return 0, errors.New("Position is out of bounds.")
 	}
@@ -53,28 +82,50 @@ func (r *StringReader) Next() (byte, error) {
 	return r.s[r.pos], nil
 }
 
-func (r *StringReader) IsEndOfString() bool {
+func (r *_StringReader) isEndOfString() bool {
 	return r.pos >= uint(len(r.s))
+}
+
+/* Helpers *******************************************************************/
+
+func StringifyTokens(tl []Token) string {
+	s := ""
+
+	for _, v := range tl {
+		switch v.Type {
+		case TOKEN_TYPE_NUMBER:
+			n := v.Value.(float64)
+			s += strconv.FormatFloat(n, 'f', -1, 64)
+		case TOKEN_TYPE_OPERATOR:
+			s += string(v.Value.(byte))
+		case TOKEN_TYPE_KEYWORD:
+			s += v.Value.(string)
+		case TOKEN_TYPE_PUNCTUATION:
+			s += string(v.Value.(byte)) //fmt.Sprintf("%s", v.Value)
+		}
+	}
+
+	return s
 }
 
 /* Lexer main ****************************************************************/
 
 type __PredicateFunc func(byte, byte, byte, string) bool
 
-func readWhile(r *StringReader, predicate __PredicateFunc) string {
+func readWhile(r *_StringReader, predicate __PredicateFunc) string {
 	s := ""
 
-	for !r.IsEndOfString() {
-		currChar, err := r.Peek(0)
+	for !r.isEndOfString() {
+		currChar, err := r.peek(0)
 		if err != nil {
 			fmt.Println(err)
 			break
 		}
-		beforeChar, err := r.Peek(-1)
+		beforeChar, err := r.peek(-1)
 		if err != nil {
 			beforeChar = 0
 		}
-		afterChar, err := r.Peek(1)
+		afterChar, err := r.peek(1)
 		if err != nil {
 			afterChar = 0
 		}
@@ -83,13 +134,13 @@ func readWhile(r *StringReader, predicate __PredicateFunc) string {
 		}
 
 		s += string(currChar)
-		r.Next()
+		r.next()
 	}
 
 	return s
 }
 
-func readNumber(r *StringReader) (Token, error) {
+func readNumber(r *_StringReader) (Token, error) {
 	isFloat := false
 	isScientific := false
 
@@ -125,22 +176,22 @@ func readNumber(r *StringReader) (Token, error) {
 	}
 
 	return Token{
-		Type:  "NUMBER",
+		Type:  TOKEN_TYPE_NUMBER,
 		Value: n_asFloat,
 	}, nil
 }
 
-func readOperator(r *StringReader) (Token, error) {
-	char, err := r.Peek(0)
+func readOperator(r *_StringReader) (Token, error) {
+	char, err := r.peek(0)
 	if err != nil {
 		return Token{}, err
 	}
 
-	r.Next()
+	r.next()
 
-	if slices.Contains(ALLOWED_OPERATORS, rune(char)) {
+	if slices.Contains(ALLOWED_OPERATORS, char) {
 		return Token{
-			Type:  "OPERATOR",
+			Type:  TOKEN_TYPE_OPERATOR,
 			Value: char,
 		}, nil
 	} else {
@@ -148,14 +199,14 @@ func readOperator(r *StringReader) (Token, error) {
 	}
 }
 
-func readKeyword(r *StringReader) (Token, error) {
+func readKeyword(r *_StringReader) (Token, error) {
 	keyw := readWhile(r, func(char byte, before byte, after byte, readString string) bool {
 		return unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char))
 	})
 
 	if slices.Contains(ALLOWED_KEYWORDS, keyw) {
 		return Token{
-			Type:  "KEYWORD",
+			Type:  TOKEN_TYPE_KEYWORD,
 			Value: keyw,
 		}, nil
 	} else {
@@ -163,17 +214,17 @@ func readKeyword(r *StringReader) (Token, error) {
 	}
 }
 
-func readPunctuation(r *StringReader) (Token, error) {
-	char, err := r.Peek(0)
+func readPunctuation(r *_StringReader) (Token, error) {
+	char, err := r.peek(0)
 	if err != nil {
 		return Token{}, err
 	}
 
-	r.Next()
+	r.next()
 
-	if slices.Contains(ALLOWED_PUCTUATION, rune(char)) {
+	if slices.Contains(ALLOWED_PUCTUATION, char) {
 		return Token{
-			Type:  "PUCTUATION",
+			Type:  TOKEN_TYPE_PUNCTUATION,
 			Value: char,
 		}, nil
 	} else {
@@ -181,16 +232,16 @@ func readPunctuation(r *StringReader) (Token, error) {
 	}
 }
 
-func analyzeNextToken(r *StringReader) (Token, error) {
+func analyzeNextToken(r *_StringReader) (Token, error) {
 	readWhile(r, func(char byte, before byte, after byte, readString string) bool {
 		return unicode.IsSpace(rune(char))
 	})
 
-	if r.IsEndOfString() {
+	if r.isEndOfString() {
 		return Token{}, fmt.Errorf("The end of string is encountered.")
 	}
 
-	char, err := r.Peek(0)
+	char, err := r.peek(0)
 	if err != nil {
 		return Token{}, err
 	}
@@ -199,7 +250,7 @@ func analyzeNextToken(r *StringReader) (Token, error) {
 		return readNumber(r)
 	}
 
-	if slices.Contains(ALLOWED_OPERATORS, rune(char)) {
+	if slices.Contains(ALLOWED_OPERATORS, char) {
 		return readOperator(r)
 	}
 
@@ -207,7 +258,7 @@ func analyzeNextToken(r *StringReader) (Token, error) {
 		return readKeyword(r)
 	}
 
-	if slices.Contains(ALLOWED_PUCTUATION, rune(char)) {
+	if slices.Contains(ALLOWED_PUCTUATION, char) {
 		return readPunctuation(r)
 	}
 
@@ -218,12 +269,12 @@ func Analyse(s string) ([]Token, error) {
 	output := []Token{}
 
 	s_prep := strings.ToUpper(strings.TrimSpace(s))
-	reader := StringReader{
+	reader := _StringReader{
 		s:   s_prep,
 		pos: 0,
 	}
 
-	for !reader.IsEndOfString() {
+	for !reader.isEndOfString() {
 		t, err := analyzeNextToken(&reader)
 		if err != nil {
 			return []Token{}, err
