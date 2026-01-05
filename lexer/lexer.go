@@ -9,39 +9,23 @@ import (
 	"unicode"
 )
 
-/* Tokens ********************************************************************/
+/* Tokens and constants ******************************************************/
 
 type Token struct {
 	Type  string
 	Value any
 }
 
-// 1  2  3.14  -45.01  0.12E4 5.886E-2  etc..
-type NumberToken struct {
-	Type  string
-	Value float64
-}
-
 var ALLOWED_OPERATORS = []rune{'+', '-', '*', '/', '^'}
 
-type OperatorToken struct {
-	Type  string
-	Value rune
-}
-
-var ALLOWED_KEYWORDS = []string{"POW", "SQRT", "ABS"}
-
-type KeywordToken struct {
-	Type  string
-	Value string
+var ALLOWED_KEYWORDS = []string{
+	// functions
+	"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT",
+	// constants
+	"PI", "E", /* "TAU", "PHI", */
 }
 
 var ALLOWED_PUCTUATION = []rune{'(', ')'}
-
-type PunctuationToken struct {
-	Type  string
-	Value string
-}
 
 /* Custom string reader ******************************************************/
 
@@ -230,8 +214,8 @@ func analyzeNextToken(r *StringReader) (Token, error) {
 	return Token{}, fmt.Errorf("Undefined character \"%s\".", string(char))
 }
 
-func Analyse(s string) ([]any, error) {
-	output := []any{}
+func Analyse(s string) ([]Token, error) {
+	output := []Token{}
 
 	s_prep := strings.ToUpper(strings.TrimSpace(s))
 	reader := StringReader{
@@ -242,7 +226,7 @@ func Analyse(s string) ([]any, error) {
 	for !reader.IsEndOfString() {
 		t, err := analyzeNextToken(&reader)
 		if err != nil {
-			return []any{}, err
+			return []Token{}, err
 		}
 
 		output = append(output, t)
