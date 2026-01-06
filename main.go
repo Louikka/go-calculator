@@ -7,7 +7,10 @@ import (
 )
 
 func main() {
-	l, err := lexer.Analyse("123 + 4 * COS(8)")
+	const s = "123 + 4 * COS(8)"
+	fmt.Println(s)
+
+	l, err := lexer.Analyse(s)
 	if err != nil {
 		fmt.Println(err)
 		return

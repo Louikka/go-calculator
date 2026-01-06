@@ -16,7 +16,8 @@ type TokenType string
 const (
 	TOKEN_TYPE_NUMBER      TokenType = "NUMBER"
 	TOKEN_TYPE_OPERATOR    TokenType = "OPERATOR"
-	TOKEN_TYPE_KEYWORD     TokenType = "KEYWORD"
+	TOKEN_TYPE_CONSTANT    TokenType = "CONSTANT"
+	TOKEN_TYPE_FUNCTION    TokenType = "FUNCTION"
 	TOKEN_TYPE_PUNCTUATION TokenType = "PUNCTUATION"
 )
 
@@ -46,12 +47,9 @@ type PunctuationToken struct {
 
 var ALLOWED_OPERATORS = []byte{'+', '-', '*', '/', '^'}
 
-var ALLOWED_KEYWORDS = []string{
-	// functions
-	"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT",
-	// constants
-	"PI", "E", /* "TAU", "PHI", */
-}
+var ALLOWED_CONSTANTS = []string{"PI", "E" /* "TAU", "PHI", */}
+
+var ALLOWED_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT"}
 
 var ALLOWED_PUCTUATION = []byte{'(', ')'}
 
@@ -96,12 +94,10 @@ func StringifyTokens(tl []Token) string {
 		case TOKEN_TYPE_NUMBER:
 			n := v.Value.(float64)
 			s += strconv.FormatFloat(n, 'f', -1, 64)
-		case TOKEN_TYPE_OPERATOR:
-			s += string(v.Value.(byte))
-		case TOKEN_TYPE_KEYWORD:
-			s += v.Value.(string)
-		case TOKEN_TYPE_PUNCTUATION:
+		case TOKEN_TYPE_OPERATOR, TOKEN_TYPE_PUNCTUATION:
 			s += string(v.Value.(byte)) //fmt.Sprintf("%s", v.Value)
+		case TOKEN_TYPE_CONSTANT, TOKEN_TYPE_FUNCTION:
+			s += v.Value.(string)
 		}
 	}
 
@@ -204,9 +200,14 @@ func readKeyword(r *_StringReader) (Token, error) {
 		return unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char))
 	})
 
-	if slices.Contains(ALLOWED_KEYWORDS, keyw) {
+	if slices.Contains(ALLOWED_CONSTANTS, keyw) {
 		return Token{
-			Type:  TOKEN_TYPE_KEYWORD,
+			Type:  TOKEN_TYPE_CONSTANT,
+			Value: keyw,
+		}, nil
+	} else if slices.Contains(ALLOWED_FUNCTIONS, keyw) {
+		return Token{
+			Type:  TOKEN_TYPE_FUNCTION,
 			Value: keyw,
 		}, nil
 	} else {

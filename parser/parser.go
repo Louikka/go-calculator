@@ -1,27 +1,20 @@
 package parser
 
 import (
-	"errors"
 	"gocalc/lexer"
 )
 
 /* Types and constants *******************************************************/
 
-const (
-	TOKEN_TYPE_NUMBER      = lexer.TOKEN_TYPE_NUMBER
-	TOKEN_TYPE_OPERATOR    = lexer.TOKEN_TYPE_OPERATOR
-	TOKEN_TYPE_KEYWORD     = lexer.TOKEN_TYPE_KEYWORD
-	TOKEN_TYPE_PUNCTUATION = lexer.TOKEN_TYPE_PUNCTUATION
-)
-
 type NodeType string
 
 const (
-	NODE_TYPE_ROOT     NodeType = "ROOT"
-	NODE_TYPE_NUMBER   NodeType = "NUMBER"
-	NODE_TYPE_FUNCTION NodeType = "FUNCTION"
-	NODE_TYPE_CONSTANT NodeType = "CONSTANT"
-	NODE_TYPE_BINARY   NodeType = "BINARY"
+	NODE_TYPE_ROOT       NodeType = "ROOT"
+	NODE_TYPE_NUMBER     NodeType = "NUMBER"
+	NODE_TYPE_CONSTANT   NodeType = "CONSTANT"
+	NODE_TYPE_FUNCTION   NodeType = "FUNCTION"
+	NODE_TYPE_EXPRESSION NodeType = "EXPRESSION"
+	NODE_TYPE_BINARY     NodeType = "BINARY"
 )
 
 type Node struct {
@@ -32,12 +25,12 @@ type Node struct {
 type NodeValueNumber struct {
 	Value float64
 }
+type NodeValueConstant struct {
+	Name string
+}
 type NodeValueFunction struct {
 	Name     string
 	Argument Node
-}
-type NodeValueConstant struct {
-	Name string
 }
 type NodeValueBinary struct {
 	Operator byte
@@ -67,37 +60,6 @@ type BinaryNode struct {
 }
 */
 
-/* Custom token list reader **************************************************/
-
-type _TokenListReader struct {
-	tl  []lexer.Token
-	pos uint
-}
-
-func (r *_TokenListReader) peek(offset int) (lexer.Token, error) {
-	newPos := int(r.pos) + offset
-
-	if newPos < 0 || newPos >= len(r.tl) {
-		return lexer.Token{}, errors.New("Position is out of bounds.")
-	}
-
-	return r.tl[newPos], nil
-}
-
-func (r *_TokenListReader) next() (lexer.Token, error) {
-	r.pos++
-
-	if r.pos >= uint(len(r.tl)) {
-		return lexer.Token{}, errors.New("Position is out of bounds.")
-	}
-
-	return r.tl[r.pos], nil
-}
-
-func (r *_TokenListReader) isEndOfString() bool {
-	return r.pos >= uint(len(r.tl))
-}
-
 /* Helpers *******************************************************************/
 
 func repeatInSlice[T any](item T, count uint) []T {
@@ -113,31 +75,31 @@ func repeatInSlice[T any](item T, count uint) []T {
 
 func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 	parenOpen := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_PUNCTUATION,
 		Value: byte('('),
 	}
 	parenClose := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_PUNCTUATION,
 		Value: byte(')'),
 	}
 	caret := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_OPERATOR,
 		Value: byte('^'),
 	}
 	star := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_OPERATOR,
 		Value: byte('*'),
 	}
 	slash := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_OPERATOR,
 		Value: byte('/'),
 	}
 	plus := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_OPERATOR,
 		Value: byte('+'),
 	}
 	minus := lexer.Token{
-		Type:  TOKEN_TYPE_PUNCTUATION,
+		Type:  lexer.TOKEN_TYPE_OPERATOR,
 		Value: byte('-'),
 	}
 
@@ -148,7 +110,7 @@ func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 	for i, v := range input {
 		t := v
 
-		if t.Type == TOKEN_TYPE_OPERATOR || t.Type == TOKEN_TYPE_PUNCTUATION {
+		if t.Type == lexer.TOKEN_TYPE_OPERATOR || t.Type == lexer.TOKEN_TYPE_PUNCTUATION {
 			switch t.Value.(byte) {
 			case '(':
 				output = append(output, repeatInSlice(parenOpen, 4)...)
@@ -168,7 +130,7 @@ func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 			case '+':
 				//fmt.Println(i, v)
 				// unary check: either first or had an operator expecting secondary argument
-				if i == 0 || input[i-1].Type == TOKEN_TYPE_PUNCTUATION {
+				if i == 0 || input[i-1].Type == lexer.TOKEN_TYPE_PUNCTUATION {
 					output = append(output, plus)
 				} else {
 					output = append(output, parenClose, parenClose, parenClose, plus, parenOpen, parenOpen, parenOpen)
@@ -176,7 +138,7 @@ func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 
 				continue
 			case '-':
-				if i == 0 || input[i-1].Type == TOKEN_TYPE_PUNCTUATION {
+				if i == 0 || input[i-1].Type == lexer.TOKEN_TYPE_PUNCTUATION {
 					output = append(output, minus)
 				} else {
 					output = append(output, parenClose, parenClose, parenClose, minus, parenOpen, parenOpen, parenOpen)
@@ -194,13 +156,149 @@ func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 	return output
 }
 
+func readParentheses(expr []lexer.Token) []lexer.Token {
+	depth := 0
+	inParenExpr := []lexer.Token{}
+
+	for _, t := range expr {
+		if t.Value == byte('(') {
+			depth++
+			if depth == 1 {
+				continue
+			}
+		} else if t.Value == byte(')') && depth > 0 {
+			depth--
+			if depth == 0 {
+				break
+			}
+		}
+
+		if depth > 0 {
+			inParenExpr = append(inParenExpr, t)
+			continue
+		}
+	}
+
+	return inParenExpr
+}
+
+func parseExpressionNode(expr []lexer.Token) Node {
+	if expr[0].Value == byte('(') {
+		// check if there is another binary expression on the same level
+		pre := parseBinary(expr)
+		if pre.Type == NODE_TYPE_BINARY {
+			preValue := pre.Value.(_NodeValueBinaryPreparsed)
+			return Node{
+				Type: NODE_TYPE_BINARY,
+				Value: NodeValueBinary{
+					Operator: preValue.Operator,
+					Left:     parseExpressionNode(preValue.Left),
+					Right:    parseExpressionNode(preValue.Right),
+				},
+			}
+		}
+
+		read := readParentheses(expr)
+		bin := parseBinary(read)
+
+		if bin.Type == NODE_TYPE_BINARY {
+			binValue := bin.Value.(_NodeValueBinaryPreparsed)
+			return Node{
+				Type: NODE_TYPE_BINARY,
+				Value: NodeValueBinary{
+					Operator: binValue.Operator,
+					Left:     parseExpressionNode(binValue.Left),
+					Right:    parseExpressionNode(binValue.Right),
+				},
+			}
+		} else {
+			return parseExpressionNode(bin.Value.([]lexer.Token))
+		}
+
+	} else if expr[0].Type == lexer.TOKEN_TYPE_NUMBER {
+		return Node{
+			Type:  NODE_TYPE_NUMBER,
+			Value: expr[0].Value,
+		}
+
+	} else if expr[0].Type == lexer.TOKEN_TYPE_CONSTANT {
+		return Node{
+			Type: NODE_TYPE_CONSTANT,
+			Value: NodeValueConstant{
+				Name: expr[0].Value.(string),
+			},
+		}
+
+	} else if expr[0].Type == lexer.TOKEN_TYPE_FUNCTION {
+		return Node{
+			Type: NODE_TYPE_FUNCTION,
+			Value: NodeValueFunction{
+				Name:     expr[0].Value.(string),
+				Argument: parseExpressionNode(readParentheses(expr)),
+			},
+		}
+	}
+
+	return Node{}
+}
+
+type _NodeValueBinaryPreparsed struct {
+	Operator byte
+	Left     []lexer.Token
+	Right    []lexer.Token
+}
+
+func parseBinary(expr []lexer.Token) Node {
+	var oper byte = 0
+	left := []lexer.Token{}
+	right := []lexer.Token{}
+
+	depth := 0
+	isLeftRead := false
+
+	for _, t := range expr {
+		if isLeftRead {
+			right = append(right, t)
+			continue
+		}
+
+		if t.Type == lexer.TOKEN_TYPE_OPERATOR && depth == 0 {
+			oper = t.Value.(byte)
+			isLeftRead = true
+			continue
+		} else {
+			left = append(left, t)
+			if t.Value == byte('(') {
+				depth++
+			} else if t.Value == byte(')') && depth > 0 {
+				depth--
+			}
+			continue
+		}
+	}
+
+	if isLeftRead {
+		return Node{
+			Type: NODE_TYPE_BINARY,
+			Value: _NodeValueBinaryPreparsed{
+				Operator: oper,
+				Left:     left,
+				Right:    right,
+			},
+		}
+	} else {
+		return Node{
+			Type:  NODE_TYPE_EXPRESSION,
+			Value: left,
+		}
+	}
+}
+
 /* Parser main ***************************************************************/
 
 func Parse(tl []lexer.Token) (Node, error) {
-	//fmt.Println(lexer.StringifyTokens(parenthesizeExpression(tl)))
-
 	return Node{
 		Type:  NODE_TYPE_ROOT,
-		Value: nil,
+		Value: parseExpressionNode(parenthesizeExpression(tl)),
 	}, nil
 }
