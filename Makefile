@@ -2,7 +2,7 @@ OUTPUT_DIR := bin
 
 
 
-test :
+run :
 	go run .
 
 build :
@@ -10,4 +10,4 @@ build :
 
 
 
-.PHONY : test build
+.PHONY : run build
