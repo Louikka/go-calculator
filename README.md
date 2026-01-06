@@ -1,5 +1,3 @@
 # go-calculator
 
----
-
 In progress...
