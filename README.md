@@ -1,3 +1,3 @@
 # go-calculator
 
-In progress...
+Terminal calculator (yes, seriously) written in Go language.

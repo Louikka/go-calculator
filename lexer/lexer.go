@@ -26,28 +26,9 @@ type Token struct {
 	Value any
 }
 
-/*
-type NumberToken struct {
-	Type  TokenType
-	Value float64
-}
-type OperatorToken struct {
-	Type  TokenType
-	Value rune
-}
-type KeywordToken struct {
-	Type  TokenType
-	Value string
-}
-type PunctuationToken struct {
-	Type  TokenType
-	Value rune
-}
-*/
-
 var ALLOWED_OPERATORS = []byte{'+', '-', '*', '/', '^'}
 
-var ALLOWED_CONSTANTS = []string{"PI", "E" /* "TAU", "PHI", */}
+var ALLOWED_CONSTANTS = []string{"PI", "E", "PHI"}
 
 var ALLOWED_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT"}
 
@@ -270,6 +251,10 @@ func Analyse(s string) ([]Token, error) {
 	output := []Token{}
 
 	s_prep := strings.ToUpper(strings.TrimSpace(s))
+	if len(s_prep) == 0 {
+		return []Token{}, fmt.Errorf("Entered empty string.")
+	}
+
 	reader := _StringReader{
 		s:   s_prep,
 		pos: 0,

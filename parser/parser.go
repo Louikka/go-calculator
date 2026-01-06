@@ -38,28 +38,6 @@ type NodeValueBinary struct {
 	Right    Node
 }
 
-/*
-type NumberNode struct {
-	Type  NodeType
-	Value float64
-}
-type FunctionNode struct {
-	Type     NodeType
-	Name     string
-	Argument Node
-}
-type ConstantNode struct {
-	Type NodeType
-	Name string
-}
-type BinaryNode struct {
-	Type     NodeType
-	Operator byte
-	Left     Node
-	Right    Node
-}
-*/
-
 /* Helpers *******************************************************************/
 
 func repeatInSlice[T any](item T, count uint) []T {
