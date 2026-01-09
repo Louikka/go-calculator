@@ -7,6 +7,8 @@ import (
 	"gocalc/parser"
 	"math"
 	"os"
+	"slices"
+	"strings"
 )
 
 func solveNode(node parser.Node) (float64, error) {
@@ -133,6 +135,17 @@ func solveBinary(node parser.Node) (float64, error) {
 	}
 }
 
+func checkIfStop(s string) bool {
+	s_prep := strings.ToUpper(strings.TrimSpace(s))
+
+	switch s_prep {
+	case "Q", "QUIT", "STOP", "END":
+		return true
+	default:
+		return false
+	}
+}
+
 func calculate(s string) (float64, error) {
 	l, err := lexer.Analyse(s)
 	if err != nil {
@@ -151,21 +164,41 @@ func calculate(s string) (float64, error) {
 	return solveNode(p.Value.(parser.Node))
 }
 
+type ProgramOptions struct {
+	IsLoop bool
+}
+
 func main() {
+	programArguments := os.Args[1:]
+
+	options := ProgramOptions{
+		IsLoop: slices.Contains(programArguments, "--with-loop"),
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print(">>> ")
-	s, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("An error occured while trying to read input : ", err)
-		return
-	}
+	for {
+		fmt.Print(">>> ")
+		s, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error : An error occured while trying to read input :", err)
+			return
+		}
 
-	n, err := calculate(s)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+		if checkIfStop(s) {
+			break
+		}
 
-	fmt.Println(n)
+		n, err := calculate(s)
+		if err != nil {
+			fmt.Println("Error :", err)
+			return
+		}
+
+		fmt.Println(n)
+
+		if !options.IsLoop {
+			break
+		}
+	}
 }

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"gocalc/lexer"
 )
 
@@ -160,20 +161,34 @@ func readParentheses(expr []lexer.Token) []lexer.Token {
 	return inParenExpr
 }
 
-func parseExpressionNode(expr []lexer.Token) Node {
+func parseExpressionNode(expr []lexer.Token) (Node, error) {
+	if len(expr) == 0 {
+		return Node{}, fmt.Errorf("Empty expression (probably missing an operand).")
+	}
+
 	if expr[0].Value == byte('(') {
 		// check if there is another binary expression on the same level
 		pre := parseBinary(expr)
 		if pre.Type == NODE_TYPE_BINARY {
 			preValue := pre.Value.(_NodeValueBinaryPreparsed)
+
+			__left, err := parseExpressionNode(preValue.Left)
+			if err != nil {
+				return Node{}, err
+			}
+			__right, err := parseExpressionNode(preValue.Right)
+			if err != nil {
+				return Node{}, err
+			}
+
 			return Node{
 				Type: NODE_TYPE_BINARY,
 				Value: NodeValueBinary{
 					Operator: preValue.Operator,
-					Left:     parseExpressionNode(preValue.Left),
-					Right:    parseExpressionNode(preValue.Right),
+					Left:     __left,
+					Right:    __right,
 				},
-			}
+			}, nil
 		}
 
 		read := readParentheses(expr)
@@ -181,14 +196,24 @@ func parseExpressionNode(expr []lexer.Token) Node {
 
 		if bin.Type == NODE_TYPE_BINARY {
 			binValue := bin.Value.(_NodeValueBinaryPreparsed)
+
+			__left, err := parseExpressionNode(binValue.Left)
+			if err != nil {
+				return Node{}, err
+			}
+			__right, err := parseExpressionNode(binValue.Right)
+			if err != nil {
+				return Node{}, err
+			}
+
 			return Node{
 				Type: NODE_TYPE_BINARY,
 				Value: NodeValueBinary{
 					Operator: binValue.Operator,
-					Left:     parseExpressionNode(binValue.Left),
-					Right:    parseExpressionNode(binValue.Right),
+					Left:     __left,
+					Right:    __right,
 				},
-			}
+			}, nil
 		} else {
 			return parseExpressionNode(bin.Value.([]lexer.Token))
 		}
@@ -197,7 +222,7 @@ func parseExpressionNode(expr []lexer.Token) Node {
 		return Node{
 			Type:  NODE_TYPE_NUMBER,
 			Value: expr[0].Value,
-		}
+		}, nil
 
 	} else if expr[0].Type == lexer.TOKEN_TYPE_CONSTANT {
 		return Node{
@@ -205,19 +230,24 @@ func parseExpressionNode(expr []lexer.Token) Node {
 			Value: NodeValueConstant{
 				Name: expr[0].Value.(string),
 			},
-		}
+		}, nil
 
 	} else if expr[0].Type == lexer.TOKEN_TYPE_FUNCTION {
+		__arg, err := parseExpressionNode(readParentheses(expr))
+		if err != nil {
+			return Node{}, err
+		}
+
 		return Node{
 			Type: NODE_TYPE_FUNCTION,
 			Value: NodeValueFunction{
 				Name:     expr[0].Value.(string),
-				Argument: parseExpressionNode(readParentheses(expr)),
+				Argument: __arg,
 			},
-		}
+		}, nil
 	}
 
-	return Node{}
+	return Node{}, nil
 }
 
 type _NodeValueBinaryPreparsed struct {
@@ -275,8 +305,13 @@ func parseBinary(expr []lexer.Token) Node {
 /* Parser main ***************************************************************/
 
 func Parse(tl []lexer.Token) (Node, error) {
+	v, err := parseExpressionNode(parenthesizeExpression(tl))
+	if err != nil {
+		return Node{}, err
+	}
+
 	return Node{
 		Type:  NODE_TYPE_ROOT,
-		Value: parseExpressionNode(parenthesizeExpression(tl)),
+		Value: v,
 	}, nil
 }
