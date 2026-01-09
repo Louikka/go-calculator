@@ -22,3 +22,8 @@ In addition, various functions and constants are also availible.
     - `LOG()` — decimal logarithm.
     - `LN()` — natural logarithm.
     - `SQRT()` — square root function.
+
+---
+
+The program also supports flags.
+- `--with-loop` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
