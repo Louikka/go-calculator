@@ -26,4 +26,4 @@ In addition, various functions and constants are also availible.
 ---
 
 The program also supports flags.
-- `--with-loop` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
+- `-r` or `--repeat` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.

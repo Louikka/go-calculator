@@ -172,7 +172,7 @@ func main() {
 	programArguments := os.Args[1:]
 
 	options := ProgramOptions{
-		IsLoop: slices.Contains(programArguments, "--with-loop"),
+		IsLoop: slices.Contains(programArguments, "--repeat") || slices.Contains(programArguments, "-r"),
 	}
 
 	reader := bufio.NewReader(os.Stdin)
