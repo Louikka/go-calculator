@@ -53,6 +53,8 @@ func repeatInSlice[T any](item T, count uint) []T {
 }
 
 func parenthesizeExpression(input []lexer.Token) []lexer.Token {
+	// https://en.wikipedia.org/wiki/Operator-precedence_parser#Full_parenthesization
+
 	parenOpen := lexer.Token{
 		Type:  lexer.TOKEN_TYPE_PUNCTUATION,
 		Value: byte('('),
@@ -107,7 +109,6 @@ func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 				output = append(output, parenClose, parenClose, slash, parenOpen, parenOpen)
 				continue
 			case '+':
-				//fmt.Println(i, v)
 				// unary check: either first or had an operator expecting secondary argument
 				if i == 0 || input[i-1].Type == lexer.TOKEN_TYPE_PUNCTUATION {
 					output = append(output, plus)
@@ -117,6 +118,7 @@ func parenthesizeExpression(input []lexer.Token) []lexer.Token {
 
 				continue
 			case '-':
+				// unary check
 				if i == 0 || input[i-1].Type == lexer.TOKEN_TYPE_PUNCTUATION {
 					output = append(output, minus)
 				} else {
