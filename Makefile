@@ -9,5 +9,4 @@ build :
 	go build -o $(OUTPUT_DIR)/
 
 
-
 .PHONY : run build
