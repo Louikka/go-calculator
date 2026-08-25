@@ -3,12 +3,12 @@ package parser
 type NodeType string
 
 const (
-	NODE_TYPE_ROOT       NodeType = "ROOT"
-	NODE_TYPE_NUMBER     NodeType = "NUMBER"
-	NODE_TYPE_CONSTANT   NodeType = "CONSTANT"
-	NODE_TYPE_FUNCTION   NodeType = "FUNCTION"
-	NODE_TYPE_EXPRESSION NodeType = "EXPRESSION"
-	NODE_TYPE_BINARY     NodeType = "BINARY"
+	NODE_TYPE_ROOT          NodeType = "ROOT"
+	NODE_TYPE_NUMBER        NodeType = "NUMBER"
+	NODE_TYPE_CONSTANT      NodeType = "CONSTANT"
+	NODE_TYPE_FUNCTION_CALL NodeType = "FUNCTION_CALL"
+	NODE_TYPE_EXPRESSION    NodeType = "EXPRESSION"
+	NODE_TYPE_BINARY        NodeType = "BINARY"
 )
 
 type Node struct {
@@ -27,7 +27,7 @@ type NodeValueFunction struct {
 	Argument Node
 }
 type NodeValueBinary struct {
-	Operator byte
+	Operator string
 	Left     Node
 	Right    Node
 }

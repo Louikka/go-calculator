@@ -22,7 +22,7 @@ func _NewScanner(s string) *_Scanner {
 }
 
 func (r *_Scanner) peek(offset int) (byte, error) {
-	newPos := int(r.pos) + offset
+	newPos := r.pos + offset
 
 	if newPos < 0 || newPos >= len(r.s) {
 		return 0, errors.New("Position is out of bounds.")
@@ -79,7 +79,7 @@ func (r *_Scanner) readNumber() (Token, error) {
 	isFloat := false
 	isScientific := false
 
-	n_str := r.readwhile(func(char byte, before byte, after byte, _ string) bool {
+	n_str := r.readwhile(func(char, before, after byte, _ string) bool {
 		if char == '.' {
 			if isFloat {
 				return false
@@ -122,20 +122,22 @@ func (r *_Scanner) readOperator() (Token, error) {
 		return Token{}, err
 	}
 
+	char_s := string(char)
+
 	r.next()
 
-	if slices.Contains(ALLOWED_OPERATORS, char) {
+	if slices.Contains(ALLOWED_OPERATORS, char_s) {
 		return Token{
 			Type:  TOKEN_TYPE_OPERATOR,
-			Value: char,
+			Value: char_s,
 		}, nil
 	} else {
-		return Token{}, fmt.Errorf("Undefined operator \"%s\".", string(char))
+		return Token{}, fmt.Errorf("Undefined operator \"%s\".", char_s)
 	}
 }
 
 func (r *_Scanner) readKeyword() (Token, error) {
-	keyw := r.readwhile(func(char byte, before byte, after byte, readString string) bool {
+	keyw := r.readwhile(func(char, before, after byte, readString string) bool {
 		return unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char))
 	})
 
@@ -150,7 +152,7 @@ func (r *_Scanner) readKeyword() (Token, error) {
 			Value: keyw,
 		}, nil
 	} else {
-		return Token{}, fmt.Errorf("Undefined keyword \"%s\".", string(keyw))
+		return Token{}, fmt.Errorf("Undefined keyword \"%s\".", keyw)
 	}
 }
 
@@ -162,10 +164,10 @@ func (r *_Scanner) readPunctuation() (Token, error) {
 
 	r.next()
 
-	if slices.Contains(ALLOWED_PUCTUATION, char) {
+	if slices.Contains(ALLOWED_PUCTUATION, string(char)) {
 		return Token{
 			Type:  TOKEN_TYPE_PUNCTUATION,
-			Value: char,
+			Value: string(char),
 		}, nil
 	} else {
 		return Token{}, fmt.Errorf("Undefined punctuation \"%s\".", string(char))
@@ -173,7 +175,7 @@ func (r *_Scanner) readPunctuation() (Token, error) {
 }
 
 func (r *_Scanner) scanNextToken() (Token, error) {
-	r.readwhile(func(char byte, before byte, after byte, readString string) bool {
+	r.readwhile(func(char, before, after byte, readString string) bool {
 		return unicode.IsSpace(rune(char))
 	})
 
@@ -190,7 +192,7 @@ func (r *_Scanner) scanNextToken() (Token, error) {
 		return r.readNumber()
 	}
 
-	if slices.Contains(ALLOWED_OPERATORS, char) {
+	if slices.Contains(ALLOWED_OPERATORS, string(char)) {
 		return r.readOperator()
 	}
 
@@ -198,11 +200,11 @@ func (r *_Scanner) scanNextToken() (Token, error) {
 		return r.readKeyword()
 	}
 
-	if slices.Contains(ALLOWED_PUCTUATION, char) {
+	if slices.Contains(ALLOWED_PUCTUATION, string(char)) {
 		return r.readPunctuation()
 	}
 
-	return Token{}, fmt.Errorf("Undefined character \"%s\".", string(char))
+	return Token{}, fmt.Errorf("Undefined character \"%c\".", char)
 }
 
 func Scan(s string) ([]Token, error) {

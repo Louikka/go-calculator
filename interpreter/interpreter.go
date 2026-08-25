@@ -16,7 +16,6 @@ func solveNode(node parser.Node) (float64, error) {
 	switch node.Type {
 
 	case parser.NODE_TYPE_NUMBER:
-		//nodeValue := node.Value.(parser.NodeValueNumber)
 		return node.Value.(float64), nil
 
 	case parser.NODE_TYPE_CONSTANT:
@@ -24,27 +23,21 @@ func solveNode(node parser.Node) (float64, error) {
 
 		constName := nodeValue.Name
 
-		const (
-			PI = iota
-			E
-			PHI
-		)
-
 		switch constName {
-		case scanner.ALLOWED_CONSTANTS[PI]:
+		case scanner.CONSTANT_PI:
 			return math.Pi, nil
 
-		case scanner.ALLOWED_CONSTANTS[E]:
+		case scanner.CONSTANT_E:
 			return math.E, nil
 
-		case scanner.ALLOWED_CONSTANTS[PHI]:
+		case scanner.CONSTANT_PHI:
 			return math.Phi, nil
 
 		default:
 			return 0, fmt.Errorf("Undefined constant \"%s\".", constName)
 		}
 
-	case parser.NODE_TYPE_FUNCTION:
+	case parser.NODE_TYPE_FUNCTION_CALL:
 		nodeValue := node.Value.(parser.NodeValueFunction)
 
 		funcName := nodeValue.Name
@@ -53,44 +46,32 @@ func solveNode(node parser.Node) (float64, error) {
 			return 0, err
 		}
 
-		const (
-			SIN = iota
-			COS
-			TAN
-			ATAN
-			EXP
-			ABS
-			LOG
-			LN
-			SQRT
-		)
-
 		switch funcName {
-		case scanner.ALLOWED_FUNCTIONS[SIN]:
+		case scanner.FUNCTION_SIN:
 			return math.Sin(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[COS]:
+		case scanner.FUNCTION_COS:
 			return math.Cos(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[TAN]:
+		case scanner.FUNCTION_TAN:
 			return math.Tan(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[ATAN]:
+		case scanner.FUNCTION_ATAN:
 			return math.Atan(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[EXP]:
+		case scanner.FUNCTION_EXP:
 			return math.Exp(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[ABS]:
+		case scanner.FUNCTION_ABS:
 			return math.Abs(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[LOG]:
+		case scanner.FUNCTION_LOG:
 			return math.Log10(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[LN]:
+		case scanner.FUNCTION_LN:
 			return math.Log(funcArg), nil
 
-		case scanner.ALLOWED_FUNCTIONS[SQRT]:
+		case scanner.FUNCTION_SQRT:
 			return math.Sqrt(funcArg), nil
 
 		default:
@@ -120,28 +101,20 @@ func solveBinary(node parser.Node) (float64, error) {
 		return 0, err
 	}
 
-	const (
-		ADD = iota
-		SUB
-		MUL
-		DIV
-		POW
-	)
-
 	switch binOper {
-	case scanner.ALLOWED_OPERATORS[ADD]:
+	case scanner.OPERATOR_ADD:
 		return binLeft + binRight, nil
 
-	case scanner.ALLOWED_OPERATORS[SUB]:
+	case scanner.OPERATOR_SUB:
 		return binLeft - binRight, nil
 
-	case scanner.ALLOWED_OPERATORS[MUL]:
+	case scanner.OPERATOR_MUL:
 		return binLeft * binRight, nil
 
-	case scanner.ALLOWED_OPERATORS[DIV]:
+	case scanner.OPERATOR_DIV:
 		return binLeft / binRight, nil
 
-	case scanner.ALLOWED_OPERATORS[POW]:
+	case scanner.OPERATOR_POW:
 		return math.Pow(binLeft, binRight), nil
 
 	default:
