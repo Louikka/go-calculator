@@ -28,4 +28,4 @@ In addition, various functions and constants are also availible.
 The program also supports flags.
 - `-r` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
 - `-ast` instead of calculating, outputs generated AST of the expression into a file (`out.txt` by default)
-- `-o` specifies output file
+- `-o <FILE>` specifies output file
