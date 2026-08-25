@@ -1,12 +1,5 @@
-OUTPUT_DIR := bin
+default :
+	go build -o bin/
 
 
-
-run :
-	go run .
-
-build :
-	go build -o $(OUTPUT_DIR)/
-
-
-.PHONY : run build
+.PHONY : default
