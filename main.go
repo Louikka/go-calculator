@@ -2,22 +2,20 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"gocalc/interpreter"
-	"gocalc/parser"
-	"gocalc/scanner"
+	"gocalc/lib"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 )
 
 type ProgramFlags struct {
-	loop           bool
-	ast            bool
-	outputFilename string
+	loop bool
+	ast  bool
+	// File name to write program output
+	out string
 }
 
 func initPropgramFlags() *ProgramFlags {
@@ -28,9 +26,9 @@ func initPropgramFlags() *ProgramFlags {
 	flag.Parse()
 
 	return &ProgramFlags{
-		loop:           *r,
-		ast:            *ast,
-		outputFilename: *out,
+		loop: *r,
+		ast:  *ast,
+		out:  *out,
 	}
 }
 
@@ -39,35 +37,6 @@ func checkIfStop(s string) bool {
 	s_prep := strings.ToUpper(strings.TrimSpace(s))
 
 	return slices.Contains(stop, s_prep)
-}
-
-func outputASTInFile(s string, filename string) error {
-	tl, err := scanner.Scan(s)
-	if err != nil {
-		return err
-	}
-
-	ast, err := parser.Parse(tl)
-	if err != nil {
-		return err
-	}
-
-	ast_b, err := json.MarshalIndent(ast, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	err = os.MkdirAll(filepath.Dir(filename), 0750)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filename, ast_b, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func main() {
@@ -79,16 +48,16 @@ func main() {
 		fmt.Print(">>> ")
 		s, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Error : An error occured while trying to read input :", err)
+			fmt.Println("An error occured while trying to read input :", err)
 			return
 		}
 
 		if flags.ast {
-			err := outputASTInFile(s, flags.outputFilename)
+			err = lib.CompileAndWriteASTToFile(s, flags.out)
 			if err != nil {
-				fmt.Println("Error : Failed to write AST in file :", err)
+				fmt.Println("Failed to write parsed AST to file :", err)
 			} else {
-				fmt.Printf("Parsed AST written to %s", flags.outputFilename)
+				fmt.Printf("Parsed AST written to %s\n", flags.out)
 			}
 
 			return
@@ -98,9 +67,9 @@ func main() {
 			break
 		}
 
-		n, err := interpreter.Calculate(s)
+		n, err := interpreter.EvaluateString(s)
 		if err != nil {
-			fmt.Println("Error :", err)
+			fmt.Println(err)
 			return
 		}
 

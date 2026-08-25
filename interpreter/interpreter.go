@@ -2,8 +2,8 @@ package interpreter
 
 import (
 	"fmt"
-	"gocalc/parser"
-	"gocalc/scanner"
+	"gocalc/interpreter/parser"
+	"gocalc/interpreter/scanner"
 	"math"
 )
 
@@ -149,20 +149,38 @@ func solveBinary(node parser.Node) (float64, error) {
 	}
 }
 
-func Calculate(s string) (float64, error) {
+func CompileToAST(s string) (parser.Node, error) {
 	sc, err := scanner.Scan(s)
 	if err != nil {
-		return 0, err
+		return parser.Node{}, err
 	}
 
 	p, err := parser.Parse(sc)
 	if err != nil {
+		return parser.Node{}, err
+	}
+
+	return p, nil
+}
+
+func EvaluateAST(ast parser.Node) (float64, error) {
+	if ast.Type != parser.NODE_TYPE_ROOT {
+		return 0, fmt.Errorf("Expected an AST root, but got \"%s\".", ast.Type)
+	}
+
+	v, ok := ast.Value.(parser.Node)
+	if !ok {
+		return 0, fmt.Errorf("Failed type assertion : ASTRoot.Value is not a parser.Node.")
+	}
+
+	return solveNode(v)
+}
+
+func EvaluateString(s string) (float64, error) {
+	ast, err := CompileToAST(s)
+	if err != nil {
 		return 0, err
 	}
 
-	if p.Type != parser.NODE_TYPE_ROOT {
-		return 0, fmt.Errorf("Expected a root of the ASTree.")
-	}
-
-	return solveNode(p.Value.(parser.Node))
+	return EvaluateAST(ast)
 }
