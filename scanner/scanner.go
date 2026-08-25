@@ -1,4 +1,4 @@
-package lexer
+package scanner
 
 import (
 	"errors"
@@ -9,39 +9,19 @@ import (
 	"unicode"
 )
 
-/* Types and constants *******************************************************/
-
-type TokenType string
-
-const (
-	TOKEN_TYPE_NUMBER      TokenType = "NUMBER"
-	TOKEN_TYPE_OPERATOR    TokenType = "OPERATOR"
-	TOKEN_TYPE_CONSTANT    TokenType = "CONSTANT"
-	TOKEN_TYPE_FUNCTION    TokenType = "FUNCTION"
-	TOKEN_TYPE_PUNCTUATION TokenType = "PUNCTUATION"
-)
-
-type Token struct {
-	Type  TokenType
-	Value any
-}
-
-var ALLOWED_OPERATORS = []byte{'+', '-', '*', '/', '^'}
-
-var ALLOWED_CONSTANTS = []string{"PI", "E", "PHI"}
-
-var ALLOWED_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT"}
-
-var ALLOWED_PUCTUATION = []byte{'(', ')'}
-
-/* Custom string reader ******************************************************/
-
-type _StringReader struct {
+type _Scanner struct {
 	s   string
-	pos uint
+	pos int
 }
 
-func (r *_StringReader) peek(offset int) (byte, error) {
+func _NewScanner(s string) *_Scanner {
+	return &_Scanner{
+		s:   s,
+		pos: 0,
+	}
+}
+
+func (r *_Scanner) peek(offset int) (byte, error) {
 	newPos := int(r.pos) + offset
 
 	if newPos < 0 || newPos >= len(r.s) {
@@ -51,45 +31,23 @@ func (r *_StringReader) peek(offset int) (byte, error) {
 	return r.s[newPos], nil
 }
 
-func (r *_StringReader) next() (byte, error) {
+func (r *_Scanner) next() (byte, error) {
 	r.pos++
 
-	if r.pos >= uint(len(r.s)) {
+	if r.pos >= len(r.s) {
 		return 0, errors.New("Position is out of bounds.")
 	}
 
 	return r.s[r.pos], nil
 }
 
-func (r *_StringReader) isEndOfString() bool {
-	return r.pos >= uint(len(r.s))
+func (r *_Scanner) isEndOfString() bool {
+	return r.pos >= len(r.s)
 }
 
-/* Helpers *******************************************************************/
+type _PredicateFunc func(byte, byte, byte, string) bool
 
-func StringifyTokens(tl []Token) string {
-	s := ""
-
-	for _, v := range tl {
-		switch v.Type {
-		case TOKEN_TYPE_NUMBER:
-			n := v.Value.(float64)
-			s += strconv.FormatFloat(n, 'f', -1, 64)
-		case TOKEN_TYPE_OPERATOR, TOKEN_TYPE_PUNCTUATION:
-			s += string(v.Value.(byte)) //fmt.Sprintf("%s", v.Value)
-		case TOKEN_TYPE_CONSTANT, TOKEN_TYPE_FUNCTION:
-			s += v.Value.(string)
-		}
-	}
-
-	return s
-}
-
-/* Lexer main ****************************************************************/
-
-type __PredicateFunc func(byte, byte, byte, string) bool
-
-func readWhile(r *_StringReader, predicate __PredicateFunc) string {
+func (r *_Scanner) readwhile(predicate _PredicateFunc) string {
 	s := ""
 
 	for !r.isEndOfString() {
@@ -117,11 +75,11 @@ func readWhile(r *_StringReader, predicate __PredicateFunc) string {
 	return s
 }
 
-func readNumber(r *_StringReader) (Token, error) {
+func (r *_Scanner) readNumber() (Token, error) {
 	isFloat := false
 	isScientific := false
 
-	n_asStr := readWhile(r, func(char byte, before byte, after byte, readString string) bool {
+	n_str := r.readwhile(func(char byte, before byte, after byte, _ string) bool {
 		if char == '.' {
 			if isFloat {
 				return false
@@ -147,18 +105,18 @@ func readNumber(r *_StringReader) (Token, error) {
 		return unicode.IsDigit(rune(char))
 	})
 
-	n_asFloat, err := strconv.ParseFloat(n_asStr, 64)
+	n_f, err := strconv.ParseFloat(n_str, 64)
 	if err != nil {
 		return Token{}, err
 	}
 
 	return Token{
 		Type:  TOKEN_TYPE_NUMBER,
-		Value: n_asFloat,
+		Value: n_f,
 	}, nil
 }
 
-func readOperator(r *_StringReader) (Token, error) {
+func (r *_Scanner) readOperator() (Token, error) {
 	char, err := r.peek(0)
 	if err != nil {
 		return Token{}, err
@@ -176,8 +134,8 @@ func readOperator(r *_StringReader) (Token, error) {
 	}
 }
 
-func readKeyword(r *_StringReader) (Token, error) {
-	keyw := readWhile(r, func(char byte, before byte, after byte, readString string) bool {
+func (r *_Scanner) readKeyword() (Token, error) {
+	keyw := r.readwhile(func(char byte, before byte, after byte, readString string) bool {
 		return unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char))
 	})
 
@@ -196,7 +154,7 @@ func readKeyword(r *_StringReader) (Token, error) {
 	}
 }
 
-func readPunctuation(r *_StringReader) (Token, error) {
+func (r *_Scanner) readPunctuation() (Token, error) {
 	char, err := r.peek(0)
 	if err != nil {
 		return Token{}, err
@@ -214,8 +172,8 @@ func readPunctuation(r *_StringReader) (Token, error) {
 	}
 }
 
-func analyzeNextToken(r *_StringReader) (Token, error) {
-	readWhile(r, func(char byte, before byte, after byte, readString string) bool {
+func (r *_Scanner) scanNextToken() (Token, error) {
+	r.readwhile(func(char byte, before byte, after byte, readString string) bool {
 		return unicode.IsSpace(rune(char))
 	})
 
@@ -229,25 +187,25 @@ func analyzeNextToken(r *_StringReader) (Token, error) {
 	}
 
 	if unicode.IsDigit(rune(char)) {
-		return readNumber(r)
+		return r.readNumber()
 	}
 
 	if slices.Contains(ALLOWED_OPERATORS, char) {
-		return readOperator(r)
+		return r.readOperator()
 	}
 
 	if unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char)) {
-		return readKeyword(r)
+		return r.readKeyword()
 	}
 
 	if slices.Contains(ALLOWED_PUCTUATION, char) {
-		return readPunctuation(r)
+		return r.readPunctuation()
 	}
 
 	return Token{}, fmt.Errorf("Undefined character \"%s\".", string(char))
 }
 
-func Analyse(s string) ([]Token, error) {
+func Scan(s string) ([]Token, error) {
 	output := []Token{}
 
 	s_prep := strings.ToUpper(strings.TrimSpace(s))
@@ -255,13 +213,10 @@ func Analyse(s string) ([]Token, error) {
 		return []Token{}, fmt.Errorf("Entered empty string.")
 	}
 
-	reader := _StringReader{
-		s:   s_prep,
-		pos: 0,
-	}
+	scanner := _NewScanner(s_prep)
 
-	for !reader.isEndOfString() {
-		t, err := analyzeNextToken(&reader)
+	for !scanner.isEndOfString() {
+		t, err := scanner.scanNextToken()
 		if err != nil {
 			return []Token{}, err
 		}

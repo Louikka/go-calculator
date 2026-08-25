@@ -2,178 +2,76 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"flag"
 	"fmt"
-	"gocalc/lexer"
+	"gocalc/interpreter"
 	"gocalc/parser"
-	"math"
+	"gocalc/scanner"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 )
 
-func solveNode(node parser.Node) (float64, error) {
-
-	if node.Type == parser.NODE_TYPE_BINARY {
-		return solveBinary(node)
-	}
-
-	switch node.Type {
-
-	case parser.NODE_TYPE_NUMBER:
-		//nodeValue := node.Value.(parser.NodeValueNumber)
-		return node.Value.(float64), nil
-
-	case parser.NODE_TYPE_CONSTANT:
-		nodeValue := node.Value.(parser.NodeValueConstant)
-
-		constName := nodeValue.Name
-
-		const (
-			PI = iota
-			E
-			PHI
-		)
-
-		switch constName {
-		case lexer.ALLOWED_CONSTANTS[PI]:
-			return math.Pi, nil
-		case lexer.ALLOWED_CONSTANTS[E]:
-			return math.E, nil
-		case lexer.ALLOWED_CONSTANTS[PHI]:
-			return math.Phi, nil
-		default:
-			return 0, fmt.Errorf("Undefined constant \"%s\".", constName)
-		}
-
-	case parser.NODE_TYPE_FUNCTION:
-		nodeValue := node.Value.(parser.NodeValueFunction)
-
-		funcName := nodeValue.Name
-		funcArg, err := solveNode(nodeValue.Argument)
-		if err != nil {
-			return 0, err
-		}
-
-		const (
-			SIN = iota
-			COS
-			TAN
-			ATAN
-			EXP
-			ABS
-			LOG
-			LN
-			SQRT
-		)
-
-		switch funcName {
-		case lexer.ALLOWED_FUNCTIONS[SIN]:
-			return math.Sin(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[COS]:
-			return math.Cos(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[TAN]:
-			return math.Tan(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[ATAN]:
-			return math.Atan(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[EXP]:
-			return math.Exp(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[ABS]:
-			return math.Abs(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[LOG]:
-			return math.Log10(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[LN]:
-			return math.Log(funcArg), nil
-		case lexer.ALLOWED_FUNCTIONS[SQRT]:
-			return math.Sqrt(funcArg), nil
-		default:
-			return 0, fmt.Errorf("Undefined function \"%s\".", funcName)
-		}
-
-	default:
-		return 0, fmt.Errorf("Undefined node type \"%s\".", node.Type)
-
-	}
+type ProgramFlags struct {
+	loop           bool
+	ast            bool
+	outputFilename string
 }
 
-func solveBinary(node parser.Node) (float64, error) {
-	if node.Type != parser.NODE_TYPE_BINARY {
-		return 0, fmt.Errorf("The node type is \"%s\", expected \"%s\".", node.Type, parser.NODE_TYPE_BINARY)
-	}
+func initPropgramFlags() *ProgramFlags {
+	r := flag.Bool("r", false, "repeat input")
+	ast := flag.Bool("ast", false, "output AST instead of calculating result")
+	out := flag.String("o", "out.txt", "specify output file")
 
-	nodeValue := node.Value.(parser.NodeValueBinary)
+	flag.Parse()
 
-	binOper := nodeValue.Operator
-	binLeft, err := solveNode(nodeValue.Left)
-	if err != nil {
-		return 0, err
-	}
-	binRight, err := solveNode(nodeValue.Right)
-	if err != nil {
-		return 0, err
-	}
-
-	switch binOper {
-
-	case lexer.ALLOWED_OPERATORS[0]: // +
-		return binLeft + binRight, nil
-
-	case lexer.ALLOWED_OPERATORS[1]: // -
-		return binLeft - binRight, nil
-
-	case lexer.ALLOWED_OPERATORS[2]: // *
-		return binLeft * binRight, nil
-
-	case lexer.ALLOWED_OPERATORS[3]: // /
-		return binLeft / binRight, nil
-
-	case lexer.ALLOWED_OPERATORS[4]: // ^
-		return math.Pow(binLeft, binRight), nil
-
-	default:
-		return 0, fmt.Errorf("Undefined operator \"%s\".", string(binOper))
-
+	return &ProgramFlags{
+		loop:           *r,
+		ast:            *ast,
+		outputFilename: *out,
 	}
 }
 
 func checkIfStop(s string) bool {
+	stop := []string{"Q", "QUIT", "STOP", "END"}
 	s_prep := strings.ToUpper(strings.TrimSpace(s))
 
-	switch s_prep {
-	case "Q", "QUIT", "STOP", "END":
-		return true
-	default:
-		return false
-	}
+	return slices.Contains(stop, s_prep)
 }
 
-func calculate(s string) (float64, error) {
-	l, err := lexer.Analyse(s)
+func outputASTInFile(s string, filename string) error {
+	tl, err := scanner.Scan(s)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	p, err := parser.Parse(l)
+	ast, err := parser.Parse(tl)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	if p.Type != parser.NODE_TYPE_ROOT {
-		return 0, fmt.Errorf("Expected a root of the ASTree.")
+	ast_b, err := json.MarshalIndent(ast, "", "  ")
+	if err != nil {
+		return err
 	}
 
-	return solveNode(p.Value.(parser.Node))
-}
+	err = os.MkdirAll(filepath.Dir(filename), 0750)
+	if err != nil {
+		return err
+	}
 
-type ProgramOptions struct {
-	IsLoop bool
+	err = os.WriteFile(filename, ast_b, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
-	programArguments := os.Args[1:]
-
-	options := ProgramOptions{
-		IsLoop: slices.Contains(programArguments, "--repeat") || slices.Contains(programArguments, "-r"),
-	}
+	flags := initPropgramFlags()
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -185,11 +83,22 @@ func main() {
 			return
 		}
 
+		if flags.ast {
+			err := outputASTInFile(s, flags.outputFilename)
+			if err != nil {
+				fmt.Println("Error : Failed to write AST in file :", err)
+			} else {
+				fmt.Printf("Parsed AST written to %s", flags.outputFilename)
+			}
+
+			return
+		}
+
 		if checkIfStop(s) {
 			break
 		}
 
-		n, err := calculate(s)
+		n, err := interpreter.Calculate(s)
 		if err != nil {
 			fmt.Println("Error :", err)
 			return
@@ -197,7 +106,7 @@ func main() {
 
 		fmt.Println(n)
 
-		if !options.IsLoop {
+		if !flags.loop {
 			break
 		}
 	}
