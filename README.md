@@ -2,7 +2,6 @@
 
 Terminal calculator (yes, seriously) written in Go language.
 
----
 
 Allowed operations are *addition* (`+`), *subtraction* (`-`), *multiplication* (`*`), *division* (`/`) and *raising to a power* (`^`).
 
@@ -23,7 +22,6 @@ In addition, various functions and constants are also availible.
     - `LN()` — natural logarithm.
     - `SQRT()` — square root function.
 
----
 
 The program also supports flags.
 - `-r` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
@@ -33,3 +31,4 @@ The program also supports flags.
 ## ToDo
 
 - Implement [summation](https://en.wikipedia.org/wiki/Summation) function.
+- Add more tests.
