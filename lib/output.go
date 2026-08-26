@@ -7,21 +7,7 @@ import (
 	"path/filepath"
 )
 
-func WriteToFile(filename string, data []byte) error {
-	err := os.MkdirAll(filepath.Dir(filename), 0750)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filename, data, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func CompileAndWriteASTToFile(source string, filename string) error {
+func CompileAndWriteASTToFile(source string, file string) error {
 	ast, err := interpreter.CompileToAST(source)
 	if err != nil {
 		return err
@@ -32,7 +18,12 @@ func CompileAndWriteASTToFile(source string, filename string) error {
 		return err
 	}
 
-	err = WriteToFile(filename, ast_s)
+	err = os.MkdirAll(filepath.Dir(file), 0750)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(file, ast_s, 0644)
 	if err != nil {
 		return err
 	}
