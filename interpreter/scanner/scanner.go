@@ -16,7 +16,7 @@ type _Scanner struct {
 
 func _NewScanner(s string) *_Scanner {
 	return &_Scanner{
-		s:   s,
+		s:   strings.ToUpper(strings.TrimSpace(s)),
 		pos: 0,
 	}
 }
@@ -41,16 +41,30 @@ func (r *_Scanner) next() (byte, error) {
 	return r.s[r.pos], nil
 }
 
-func (r *_Scanner) isEndOfString() bool {
+// Reports if character on current position is last.
+func (r *_Scanner) isLast() bool {
+	return r.pos == len(r.s)-1
+}
+
+// Reports if no available characters left (meaning peek() and next() will
+// fail).
+func (r *_Scanner) isEnd() bool {
 	return r.pos >= len(r.s)
 }
+
+// Checks if input string is empty (length is 0).
+func (r *_Scanner) IsEmpty() bool {
+	return len(r.s) <= 0
+}
+
+/* */
 
 type _PredicateFunc func(byte, byte, byte, string) bool
 
 func (r *_Scanner) readwhile(predicate _PredicateFunc) string {
 	s := ""
 
-	for !r.isEndOfString() {
+	for !r.isEnd() {
 		currChar, err := r.peek(0)
 		if err != nil {
 			fmt.Println(err)
@@ -141,18 +155,29 @@ func (r *_Scanner) readKeyword() (Token, error) {
 		return unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char))
 	})
 
-	if slices.Contains(ALLOWED_CONSTANTS, keyw) {
+	nextT, err := r.peek(0)
+	if err != nil {
+		// out of bounds error => no more characters afterwards
+		// therefore it is a constant
 		return Token{
 			Type:  TOKEN_TYPE_CONSTANT,
 			Value: keyw,
 		}, nil
-	} else if slices.Contains(ALLOWED_FUNCTIONS, keyw) {
+	}
+
+	if string(nextT) == PUNCTUATION_LPAREN {
+		// if next character is opening parenthesis, then it is a
+		// function
 		return Token{
 			Type:  TOKEN_TYPE_FUNCTION,
 			Value: keyw,
 		}, nil
 	} else {
-		return Token{}, fmt.Errorf("Undefined keyword \"%s\".", keyw)
+		// a constant otherwise
+		return Token{
+			Type:  TOKEN_TYPE_CONSTANT,
+			Value: keyw,
+		}, nil
 	}
 }
 
@@ -179,7 +204,7 @@ func (r *_Scanner) scanNextToken() (Token, error) {
 		return unicode.IsSpace(rune(char))
 	})
 
-	if r.isEndOfString() {
+	if r.isEnd() {
 		return Token{}, fmt.Errorf("The end of string is encountered.")
 	}
 
@@ -210,14 +235,12 @@ func (r *_Scanner) scanNextToken() (Token, error) {
 func Scan(s string) ([]Token, error) {
 	output := []Token{}
 
-	s_prep := strings.ToUpper(strings.TrimSpace(s))
-	if len(s_prep) == 0 {
+	scanner := _NewScanner(s)
+	if scanner.IsEmpty() {
 		return []Token{}, fmt.Errorf("Entered empty string.")
 	}
 
-	scanner := _NewScanner(s_prep)
-
-	for !scanner.isEndOfString() {
+	for !scanner.isEnd() {
 		t, err := scanner.scanNextToken()
 		if err != nil {
 			return []Token{}, err
