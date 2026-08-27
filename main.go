@@ -52,8 +52,18 @@ func main() {
 			return
 		}
 
+		if checkIfStop(s) {
+			break
+		}
+
+		ast, err := interpreter.CompileToAST(s)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		if flags.ast {
-			err = lib.CompileAndWriteASTToFile(s, flags.out)
+			err = lib.WriteJSONToFile(ast, flags.out)
 			if err != nil {
 				fmt.Println("Failed to write parsed AST to file :", err)
 			} else {
@@ -63,11 +73,7 @@ func main() {
 			return
 		}
 
-		if checkIfStop(s) {
-			break
-		}
-
-		n, err := interpreter.EvaluateString(s)
+		n, err := interpreter.EvaluateAST(ast)
 		if err != nil {
 			fmt.Println(err)
 			return
