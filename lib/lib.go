@@ -1,27 +1,14 @@
 package lib
 
-import (
-	"encoding/json"
-	"os"
-	"path/filepath"
-)
+func LongestStringLenInSlice(slice []string) int {
+	maxLen := 0
 
-// Pretty-formats JSON or JSON-like value and writes it to the file.
-func WriteJSONToFile(v any, file string) error {
-	v_asBytes, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
+	for _, s := range slice {
+		sLen := len(s)
+		if sLen > maxLen {
+			maxLen = sLen
+		}
 	}
 
-	err = os.MkdirAll(filepath.Dir(file), 0750)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(file, v_asBytes, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return maxLen
 }
