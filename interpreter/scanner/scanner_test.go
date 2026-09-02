@@ -31,165 +31,169 @@ func TestScannerInitialization(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		scanner := _NewScanner(test.input)
+	for i, test := range tests {
+		scanner := NewScanner(test.input)
 
 		if scanner.s != test.expected {
-			t.Errorf("\"%s\" => strings mismatched (got \"%s\", expected \"%s\")", test.input, scanner.s, test.expected)
+			t.Errorf("(case no.%d) => strings mismatched (got \"%s\", expected \"%s\")", i, scanner.s, test.expected)
 		}
 		if scanner.pos != 0 {
-			t.Errorf("\"%s\" => wrong initial position (got %d instead of 0).", test.input, scanner.pos)
+			t.Errorf("(case no.%d) => wrong initial position (got %d instead of 0).", i, scanner.pos)
 		}
 	}
 }
 
-func TestScannerCoreFunctions(t *testing.T) {
-	const test_str = "123"
-	const test_strlen = len(test_str)
-
-	scanner := _NewScanner(test_str)
-
-	peekedChar, err := scanner.peek(0)
-	if err != nil {
-		t.Errorf("peek() => %s", err)
-	}
-	if peekedChar != test_str[0] {
-		t.Errorf("peek() => (peeking at pos 0) mismatched char (\"%c\" instead of \"%c\")", test_str[0], peekedChar)
-	}
-
-	nextChar, err := scanner.next()
-	if err != nil {
-		t.Errorf("next() => %s", err)
-	}
-	if nextChar != test_str[1] {
-		t.Errorf("next() => mismatched char (\"%c\" instead of \"%c\")", test_str[1], nextChar)
-	}
-
-	peekedChar, err = scanner.peek(1)
-	if err != nil {
-		t.Errorf("peek() => %s", err)
-	}
-	if peekedChar != test_str[2] {
-		t.Errorf("peek() => (peeking at pos 2) mismatched char (\"%c\" instead of \"%c\")", test_str[2], peekedChar)
-	}
-
-	// set position to the last
-	scanner.pos = test_strlen - 1
-
-	if !scanner.isLast() {
-		t.Errorf("isLast() => current position %d in string with length of %d", scanner.pos, test_strlen)
-	}
-
-	scanner.pos++
-
-	if !scanner.isEnd() {
-		t.Errorf("isEnd() => current position %d in string with length of %d", scanner.pos, test_strlen)
-	}
-
-	scanner = _NewScanner("abcdefg123456789")
-	for i := 0; !scanner.isEnd(); i++ {
-		_, err := scanner.peek(0)
-		if err != nil {
-			t.Errorf("iteration failed => peek() error at iteration %d : %s", i, err)
-		}
-
-		if !scanner.isLast() {
-			_, err = scanner.next()
-			if err != nil {
-				t.Errorf("iteration failed => next() error at iteration %d : %s", i, err)
-			}
-		} else {
-			break
-		}
-	}
-}
-
-func TestScannerReadVariable(t *testing.T) {
-	tests := []struct {
-		s      string
-		ttype  TokenType
-		tvalue string
+func TestScanner_IsLast(t *testing.T) {
+	cases := []struct {
+		s        string
+		expected bool
 	}{
 		{
-			s:      "$ABC",
-			ttype:  TOKEN_TYPE_VARIABLE,
-			tvalue: "$ABC",
+			s:        "123",
+			expected: false,
 		},
 		{
-			s:      "$a1",
-			ttype:  TOKEN_TYPE_VARIABLE,
-			tvalue: "$A1",
+			s:        "12",
+			expected: false,
+		},
+		{
+			s:        "1",
+			expected: true,
+		},
+		{
+			s:        "",
+			expected: false,
 		},
 	}
 
-	for _, test := range tests {
-		scanner := _NewScanner(test.s)
-
-		token, err := scanner.readVariable()
-		if err != nil {
-			t.Errorf("\"%s\" => %s", test.s, err)
-		}
-
-		if token.Type != test.ttype {
-			t.Errorf("\"%s\" => token type mismatched (got \"%s\", expected \"%s\")", test.s, token.Type, test.ttype)
-		}
-		if token.Value != test.tvalue {
-			t.Errorf("\"%s\" => token value mismatched (got \"%s\", expected \"%s\")", test.s, token.Value, test.tvalue)
+	for i, c := range cases {
+		scanner := NewScanner(c.s)
+		got := scanner.isLast()
+		if got != c.expected {
+			t.Errorf("(case no.%d) => expected %t, got %t", i, c.expected, got)
 		}
 	}
 }
 
-func TestScannerReadKeyword(t *testing.T) {
-	tests := []struct {
-		s      string
-		ttype  TokenType
-		tvalue string
+func TestScanner_IsEnd(t *testing.T) {
+	cases := []struct {
+		s        string
+		expected bool
 	}{
 		{
-			s:      "PI",
-			ttype:  TOKEN_TYPE_CONSTANT,
-			tvalue: "PI",
+			s:        "123",
+			expected: false,
 		},
 		{
-			s:      "E",
-			ttype:  TOKEN_TYPE_CONSTANT,
-			tvalue: "E",
+			s:        "12",
+			expected: false,
 		},
 		{
-			s:      "NONEXISTINGCONSTANT",
-			ttype:  TOKEN_TYPE_CONSTANT,
-			tvalue: "NONEXISTINGCONSTANT",
+			s:        "1",
+			expected: false,
 		},
 		{
-			s:      "COS(12.3)",
-			ttype:  TOKEN_TYPE_FUNCTION,
-			tvalue: "COS",
-		},
-		{
-			s:      "ABS()",
-			ttype:  TOKEN_TYPE_FUNCTION,
-			tvalue: "ABS",
-		},
-		{
-			s:      "NONEXISTINGFUNCTION()",
-			ttype:  TOKEN_TYPE_FUNCTION,
-			tvalue: "NONEXISTINGFUNCTION",
+			s:        "",
+			expected: true,
 		},
 	}
 
-	for _, test := range tests {
-		scanner := _NewScanner(test.s)
+	for i, c := range cases {
+		scanner := NewScanner(c.s)
+		got := scanner.isEnd()
+		if got != c.expected {
+			t.Errorf("(case no.%d) => expected %t, got %t", i, c.expected, got)
+		}
+	}
+}
 
-		token, err := scanner.readKeyword()
+func TestScanner_Peek(t *testing.T) {
+	const s = "123"
+
+	cases := []struct {
+		peekPos      int
+		expectedChar byte
+	}{
+		{
+			peekPos:      0,
+			expectedChar: s[0],
+		},
+		{
+			peekPos:      1,
+			expectedChar: s[1],
+		},
+		{
+			peekPos:      2,
+			expectedChar: s[2],
+		},
+	}
+
+	scanner := NewScanner(s)
+
+	for i, c := range cases {
+		char, err := scanner.peek(c.peekPos)
 		if err != nil {
-			t.Errorf("\"%s\" => %s", test.s, err)
+			t.Errorf("(case no.%d) error => %s", i, err)
 		}
+		if char != c.expectedChar {
+			t.Errorf("(case no.%d) => mismatched char %d instead of %d", i, char, c.expectedChar)
+		}
+	}
+}
 
-		if token.Type != test.ttype {
-			t.Errorf("\"%s\" => token type mismatched (got \"%s\", expected \"%s\")", test.s, token.Type, test.ttype)
+func TestScanner_Next(t *testing.T) {
+	const s = "123"
+
+	expectedChars := []byte{
+		s[1],
+		s[2],
+	}
+
+	scanner := NewScanner(s)
+
+	for i, expected := range expectedChars {
+		char, err := scanner.next()
+		if err != nil {
+			t.Errorf("(case no.%d) error => %s", i, err)
 		}
-		if token.Value != test.tvalue {
-			t.Errorf("\"%s\" => token value mismatched (got \"%s\", expected \"%s\")", test.s, token.Value, test.tvalue)
+		if char != expected {
+			t.Errorf("(case no.%d) => mismatched char %d instead of %d", i, char, expected)
+		}
+	}
+}
+
+func TestScanner_IsEmpty(t *testing.T) {
+	cases := []struct {
+		s        string
+		expected bool
+	}{
+		{
+			s:        "123",
+			expected: false,
+		},
+		{
+			s:        "  123    ",
+			expected: false,
+		},
+		{
+			s:        "",
+			expected: true,
+		},
+		{
+			s:        "   ",
+			expected: true,
+		},
+		{
+			s:        " 	\n",
+			expected: true,
+		},
+	}
+
+	for i, c := range cases {
+		scanner := NewScanner(c.s)
+		got := scanner.IsEmpty()
+		if got != c.expected {
+			t.Errorf("(case no.%d) => expected %t, got %t", i, c.expected, got)
 		}
 	}
 }
