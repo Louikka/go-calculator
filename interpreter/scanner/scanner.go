@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -14,18 +13,18 @@ type _Scanner struct {
 	pos int
 }
 
-func _NewScanner(s string) *_Scanner {
-	return &_Scanner{
+func _NewScanner(s string) _Scanner {
+	return _Scanner{
 		s:   strings.ToUpper(strings.TrimSpace(s)),
 		pos: 0,
 	}
 }
 
-func (r *_Scanner) peek(offset int) (byte, error) {
+func (r _Scanner) peek(offset int) (byte, error) {
 	newPos := r.pos + offset
 
 	if newPos < 0 || newPos >= len(r.s) {
-		return 0, errors.New("Position is out of bounds.")
+		return 0, ErrOutOfBounds
 	}
 
 	return r.s[newPos], nil
@@ -35,50 +34,57 @@ func (r *_Scanner) next() (byte, error) {
 	r.pos++
 
 	if r.pos >= len(r.s) {
-		return 0, errors.New("Position is out of bounds.")
+		return 0, ErrOutOfBounds
 	}
 
 	return r.s[r.pos], nil
 }
 
 // Reports if character on current position is last.
-func (r *_Scanner) isLast() bool {
+func (r _Scanner) isLast() bool {
 	return r.pos == len(r.s)-1
 }
 
 // Reports if no available characters left (meaning peek() and next() will
 // fail).
-func (r *_Scanner) isEnd() bool {
+func (r _Scanner) isEnd() bool {
 	return r.pos >= len(r.s)
 }
 
 // Checks if input string is empty (length is 0).
-func (r *_Scanner) IsEmpty() bool {
+func (r _Scanner) IsEmpty() bool {
 	return len(r.s) <= 0
 }
 
 /* */
 
-type _PredicateFunc func(byte, byte, byte, string) bool
+type _PredicateFunc func(char, before, after byte, readString string) (bool, error)
 
-func (r *_Scanner) readwhile(predicate _PredicateFunc) string {
+func (r *_Scanner) readwhile(predicate _PredicateFunc) (string, error) {
 	s := ""
 
 	for !r.isEnd() {
 		currChar, err := r.peek(0)
 		if err != nil {
-			fmt.Println(err)
-			break
+			return s, err
 		}
+
 		beforeChar, err := r.peek(-1)
 		if err != nil {
 			beforeChar = 0
 		}
+
 		afterChar, err := r.peek(1)
 		if err != nil {
 			afterChar = 0
 		}
-		if !predicate(currChar, beforeChar, afterChar, s) {
+
+		predic, err := predicate(currChar, beforeChar, afterChar, s)
+		if err != nil {
+			return s, err
+		}
+
+		if !predic {
 			break
 		}
 
@@ -86,38 +92,41 @@ func (r *_Scanner) readwhile(predicate _PredicateFunc) string {
 		r.next()
 	}
 
-	return s
+	return s, nil
 }
 
 func (r *_Scanner) readNumber() (Token, error) {
 	isFloat := false
 	isScientific := false
 
-	n_str := r.readwhile(func(char, before, after byte, _ string) bool {
+	n_str, err := r.readwhile(func(char, before, after byte, _ string) (bool, error) {
 		if char == '.' {
 			if isFloat {
-				return false
+				return false, nil
 			}
 
 			isFloat = true
-			return true
+			return true, nil
 		}
 
 		if char == 'E' && (after == '-' || unicode.IsDigit(rune(after))) {
 			if isScientific {
-				return false
+				return false, nil
 			}
 
 			isScientific = true
-			return true
+			return true, nil
 		}
 
 		if char == '-' && isScientific && before == 'E' {
-			return true
+			return true, nil
 		}
 
-		return unicode.IsDigit(rune(char))
+		return unicode.IsDigit(rune(char)), nil
 	})
+	if err != nil {
+		return Token{}, err
+	}
 
 	n_f, err := strconv.ParseFloat(n_str, 64)
 	if err != nil {
@@ -150,19 +159,55 @@ func (r *_Scanner) readOperator() (Token, error) {
 	}
 }
 
-func (r *_Scanner) readKeyword() (Token, error) {
-	keyw := r.readwhile(func(char, before, after byte, readString string) bool {
-		return unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char))
+func (r *_Scanner) readVariable() (Token, error) {
+	isVar := false
+
+	v, err := r.readwhile(func(char, before, after byte, readString string) (bool, error) {
+		if char == '$' {
+			if unicode.IsDigit(rune(after)) {
+				return false, fmt.Errorf("variables cannot start with a digit")
+			}
+
+			isVar = true
+			return true, nil
+		}
+
+		if isVar && (IsLetter(char) || unicode.IsDigit(rune(char))) {
+			return true, nil
+		}
+
+		return false, nil
 	})
+	if err != nil {
+		return Token{}, err
+	}
+
+	return Token{
+		Type:  TOKEN_TYPE_VARIABLE,
+		Value: v,
+	}, nil
+}
+
+func (r *_Scanner) readKeyword() (Token, error) {
+	keyw, err := r.readwhile(func(char, before, after byte, readString string) (bool, error) {
+		return IsLetter(char), nil
+	})
+	if err != nil {
+		return Token{}, err
+	}
 
 	nextT, err := r.peek(0)
 	if err != nil {
-		// out of bounds error => no more characters afterwards
-		// therefore it is a constant
-		return Token{
-			Type:  TOKEN_TYPE_CONSTANT,
-			Value: keyw,
-		}, nil
+		if err == ErrOutOfBounds {
+			// out of bounds error => no more characters afterwards
+			// therefore it is a constant
+			return Token{
+				Type:  TOKEN_TYPE_CONSTANT,
+				Value: keyw,
+			}, nil
+		} else {
+			return Token{}, err
+		}
 	}
 
 	if string(nextT) == PUNCTUATION_LPAREN {
@@ -200,9 +245,12 @@ func (r *_Scanner) readPunctuation() (Token, error) {
 }
 
 func (r *_Scanner) scanNextToken() (Token, error) {
-	r.readwhile(func(char, before, after byte, readString string) bool {
-		return unicode.IsSpace(rune(char))
+	_, err := r.readwhile(func(char, before, after byte, readString string) (bool, error) {
+		return unicode.IsSpace(rune(char)), nil
 	})
+	if err != nil {
+		return Token{}, err
+	}
 
 	if r.isEnd() {
 		return Token{}, fmt.Errorf("The end of string is encountered.")
@@ -221,7 +269,11 @@ func (r *_Scanner) scanNextToken() (Token, error) {
 		return r.readOperator()
 	}
 
-	if unicode.IsLetter(rune(char)) && unicode.Is(unicode.Latin, rune(char)) {
+	if char == '$' {
+		return r.readVariable()
+	}
+
+	if IsLetter(char) {
 		return r.readKeyword()
 	}
 

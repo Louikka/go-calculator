@@ -104,6 +104,41 @@ func TestScannerCoreFunctions(t *testing.T) {
 	}
 }
 
+func TestScannerReadVariable(t *testing.T) {
+	tests := []struct {
+		s      string
+		ttype  TokenType
+		tvalue string
+	}{
+		{
+			s:      "$ABC",
+			ttype:  TOKEN_TYPE_VARIABLE,
+			tvalue: "$ABC",
+		},
+		{
+			s:      "$a1",
+			ttype:  TOKEN_TYPE_VARIABLE,
+			tvalue: "$A1",
+		},
+	}
+
+	for _, test := range tests {
+		scanner := _NewScanner(test.s)
+
+		token, err := scanner.readVariable()
+		if err != nil {
+			t.Errorf("\"%s\" => %s", test.s, err)
+		}
+
+		if token.Type != test.ttype {
+			t.Errorf("\"%s\" => token type mismatched (got \"%s\", expected \"%s\")", test.s, token.Type, test.ttype)
+		}
+		if token.Value != test.tvalue {
+			t.Errorf("\"%s\" => token value mismatched (got \"%s\", expected \"%s\")", test.s, token.Value, test.tvalue)
+		}
+	}
+}
+
 func TestScannerReadKeyword(t *testing.T) {
 	tests := []struct {
 		s      string

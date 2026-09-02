@@ -186,6 +186,14 @@ func parseExpressionNode(expr []scanner.Token) (Node, error) {
 			Value: expr[0].Value,
 		}, nil
 
+	} else if expr[0].Type == scanner.TOKEN_TYPE_VARIABLE {
+		return Node{
+			Type: NODE_TYPE_VARIABLE,
+			Value: NodeValueVariable{
+				Name: expr[0].Value.(string),
+			},
+		}, nil
+
 	} else if expr[0].Type == scanner.TOKEN_TYPE_CONSTANT {
 		return Node{
 			Type: NODE_TYPE_CONSTANT,
