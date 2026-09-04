@@ -1,41 +1,100 @@
 package parser
 
-type NodeType string
-
-const (
-	NODE_TYPE_ROOT          NodeType = "ROOT"
-	NODE_TYPE_NUMBER        NodeType = "NUMBER"
-	NODE_TYPE_VARIABLE      NodeType = "VARIABLE"
-	NODE_TYPE_CONSTANT      NodeType = "CONSTANT"
-	NODE_TYPE_FUNCTION_CALL NodeType = "FUNCTION_CALL"
-	NODE_TYPE_EXPRESSION    NodeType = "EXPRESSION"
-	NODE_TYPE_BINARY        NodeType = "BINARY"
-)
-
-type Node struct {
-	Type  NodeType
-	Value any
+type Node interface {
+	Type() string
 }
 
-type NodeValueNumber struct {
+// invalid
+
+type InvalidNode struct {
+	//
+}
+
+func (n InvalidNode) Type() string {
+	return "INVALID"
+}
+
+// root
+
+type NodeRoot struct {
+	Value Node
+}
+
+func (n NodeRoot) Type() string {
+	return "ROOT"
+}
+
+// number
+
+type NodeNumber struct {
 	Value float64
 }
 
-type NodeValueVariable struct {
+func (n NodeNumber) Type() string {
+	return "NUMBER"
+}
+
+// range
+
+type NodeRange struct {
+	Start int
+	End   int
+}
+
+func (n NodeRange) Type() string {
+	return "RANGE"
+}
+
+// variable
+
+type NodeVariable struct {
 	Name string
 }
 
-type NodeValueConstant struct {
+func (n NodeVariable) Type() string {
+	return "VARIABLE"
+}
+
+// constant
+
+type NodeConstant struct {
 	Name string
 }
 
-type NodeValueFunction struct {
-	Name     string
-	Argument Node
+func (n NodeConstant) Type() string {
+	return "CONSTANT"
 }
 
-type NodeValueBinary struct {
+// function call
+
+type NodeFuncCall struct {
+	Name      string
+	Arguments []Node
+}
+
+func (n NodeFuncCall) Type() string {
+	return "FUNCTION_CALL"
+}
+
+// IRANGE function main argument
+
+type NodeIRangeFuncMainArg struct {
+	Variable NodeVariable
+	Range    NodeRange
+}
+
+func (n NodeIRangeFuncMainArg) Type() string {
+	return "IRANGE_FUNCTION_MAIN_ARG"
+}
+
+// binary expression
+
+type NodeBinary struct {
 	Operator string
 	Left     Node
 	Right    Node
+}
+
+func (n NodeBinary) Type() string {
+	return "BINARY"
 }

@@ -2,46 +2,26 @@ package parser
 
 import (
 	"fmt"
+	"gocalc/interpreter/lexemes"
 	"gocalc/interpreter/scanner"
+	"slices"
 )
 
-// Converts unary operations to binary
-func unUnaryExpression(expr []scanner.Token) []scanner.Token {
-	out := []scanner.Token{}
-
-	for i, t := range expr {
-		tIsOper := t.Type == scanner.TOKEN_TYPE_OPERATOR
-		if tIsOper && (t.Value == scanner.OPERATOR_ADD || t.Value == scanner.OPERATOR_SUB) {
-			if i == 0 {
-				out = append(out, scanner.NewNumberToken(0))
-			} else /* i > 0 */ {
-				prevT := expr[i-1]
-				prevTIsPunc := prevT.Type == scanner.TOKEN_TYPE_PUNCTUATION
-				if prevTIsPunc && prevT.Value == scanner.PUNCTUATION_LPAREN {
-					out = append(out, scanner.NewNumberToken(0))
-				}
-			}
-		}
-
-		out = append(out, t)
-	}
-
-	return out
-}
-
-// Reads expression in parentheses. If no parentheses present in expression, returns empty slice.
+// Reads first encountered parentheses in expression. If no parentheses
+// present, returns empty slice.
 func readParentheses(expr []scanner.Token) []scanner.Token {
 	depth := 0
 	outExpr := []scanner.Token{}
 
 	for _, t := range expr {
-		if t.Type == scanner.TOKEN_TYPE_PUNCTUATION {
-			if t.Value == scanner.PUNCTUATION_LPAREN {
+		tPunc, ok := t.(scanner.TokenPunctuation)
+		if ok {
+			if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
 				depth++
 				if depth == 1 {
 					continue
 				}
-			} else if t.Value == scanner.PUNCTUATION_RPAREN && depth > 0 {
+			} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN && depth > 0 {
 				depth--
 				if depth == 0 {
 					break
@@ -58,170 +38,69 @@ func readParentheses(expr []scanner.Token) []scanner.Token {
 	return outExpr
 }
 
-func parenthesizeExpression(input []scanner.Token) []scanner.Token {
-	// https://en.wikipedia.org/wiki/Operator-precedence_parser#Full_parenthesization
+func parseRange(expr []scanner.Token) (NodeRange, error) {
+	node := NodeRange{}
 
-	tAdd := scanner.NewOperatorToken(scanner.OPERATOR_ADD)
-	tSub := scanner.NewOperatorToken(scanner.OPERATOR_SUB)
-	tMul := scanner.NewOperatorToken(scanner.OPERATOR_MUL)
-	tDiv := scanner.NewOperatorToken(scanner.OPERATOR_DIV)
-	tPow := scanner.NewOperatorToken(scanner.OPERATOR_POW)
-	tLParen := scanner.NewPunctuationToken(scanner.PUNCTUATION_LPAREN)
-	tRParen := scanner.NewPunctuationToken(scanner.PUNCTUATION_RPAREN)
+	if len(expr) < 3 {
+		return node, fmt.Errorf("not enough tokens to parse expression as range")
+	}
 
-	output := []scanner.Token{}
+	// start
 
-	output = append(output, tLParen, tLParen, tLParen, tLParen)
+	start, ok := expr[0].(scanner.TokenNumber)
+	if !ok || !start.IsInt() {
+		return node, fmt.Errorf("expected a range start (an integer)")
+	}
 
-	for i, t := range input {
-		if t.Type == scanner.TOKEN_TYPE_OPERATOR || t.Type == scanner.TOKEN_TYPE_PUNCTUATION {
-			switch t.Value {
-			case scanner.OPERATOR_POW:
-				output = append(output, tRParen, tPow, tLParen)
+	node.Start = int(start.Value)
 
-			case scanner.OPERATOR_MUL:
-				output = append(output, tRParen, tRParen, tMul, tLParen, tLParen)
+	// range operator
 
-			case scanner.OPERATOR_DIV:
-				output = append(output, tRParen, tRParen, tDiv, tLParen, tLParen)
+	oper, ok := expr[1].(scanner.TokenOperator)
+	if !ok || oper.Value != lexemes.OPERATOR_RANGE {
+		return node, fmt.Errorf("expected a range operator")
+	}
 
-			case scanner.OPERATOR_ADD:
-				// unary check: either first or had an operator expecting secondary argument
-				if i == 0 || input[i-1].Value == scanner.PUNCTUATION_LPAREN {
-					output = append(output, tAdd)
-				} else {
-					output = append(output, tRParen, tRParen, tRParen, tAdd, tLParen, tLParen, tLParen)
-				}
+	// end
 
-			case scanner.OPERATOR_SUB:
-				// unary check
-				if i == 0 || input[i-1].Value == scanner.PUNCTUATION_LPAREN {
-					output = append(output, tSub)
-				} else {
-					output = append(output, tRParen, tRParen, tRParen, tSub, tLParen, tLParen, tLParen)
-				}
+	end, ok := expr[2].(scanner.TokenNumber)
+	if !ok || !end.IsInt() {
+		return node, fmt.Errorf("expected a range start (an integer)")
+	}
 
-			case scanner.PUNCTUATION_LPAREN:
-				output = append(output, tLParen, tLParen, tLParen, tLParen)
+	node.End = int(end.Value)
 
-			case scanner.PUNCTUATION_RPAREN:
-				output = append(output, tRParen, tRParen, tRParen, tRParen)
-			}
+	return node, nil
+}
+
+// Checks if given expression (list of tokens) is binary (at least one
+// top-level operator).
+func isBinary(expr []scanner.Token) bool {
+	depth := 0
+
+	for _, t := range expr {
+		_, isOper := t.(scanner.TokenOperator)
+		if isOper && depth == 0 {
+			return true
 		} else {
-			output = append(output, t)
+			tPunc, ok := t.(scanner.TokenPunctuation)
+			if ok {
+				if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+					depth++
+				} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN && depth > 0 {
+					depth--
+				}
+			}
 		}
 	}
 
-	output = append(output, tRParen, tRParen, tRParen, tRParen)
-
-	return output
+	return false
 }
 
-type _NodeValueBinary struct {
-	Operator string
-	Left     []scanner.Token
-	Right    []scanner.Token
-}
-
-func parseExpressionNode(expr []scanner.Token) (Node, error) {
-	if len(expr) == 0 {
-		return Node{}, fmt.Errorf("Empty expression (probably missing an operand).")
-	}
-
-	if expr[0].Value == scanner.PUNCTUATION_LPAREN {
-		// check if there is another binary expression on the same level
-		pre := parseBinary(expr)
-		if pre.Type == NODE_TYPE_BINARY {
-			preValue := pre.Value.(_NodeValueBinary)
-
-			__left, err := parseExpressionNode(preValue.Left)
-			if err != nil {
-				return Node{}, err
-			}
-			__right, err := parseExpressionNode(preValue.Right)
-			if err != nil {
-				return Node{}, err
-			}
-
-			return Node{
-				Type: NODE_TYPE_BINARY,
-				Value: NodeValueBinary{
-					Operator: preValue.Operator,
-					Left:     __left,
-					Right:    __right,
-				},
-			}, nil
-		}
-
-		read := readParentheses(expr)
-		bin := parseBinary(read)
-
-		if bin.Type == NODE_TYPE_BINARY {
-			binValue := bin.Value.(_NodeValueBinary)
-
-			__left, err := parseExpressionNode(binValue.Left)
-			if err != nil {
-				return Node{}, err
-			}
-			__right, err := parseExpressionNode(binValue.Right)
-			if err != nil {
-				return Node{}, err
-			}
-
-			return Node{
-				Type: NODE_TYPE_BINARY,
-				Value: NodeValueBinary{
-					Operator: binValue.Operator,
-					Left:     __left,
-					Right:    __right,
-				},
-			}, nil
-		} else {
-			return parseExpressionNode(bin.Value.([]scanner.Token))
-		}
-
-	} else if expr[0].Type == scanner.TOKEN_TYPE_NUMBER {
-		return Node{
-			Type:  NODE_TYPE_NUMBER,
-			Value: expr[0].Value,
-		}, nil
-
-	} else if expr[0].Type == scanner.TOKEN_TYPE_VARIABLE {
-		return Node{
-			Type: NODE_TYPE_VARIABLE,
-			Value: NodeValueVariable{
-				Name: expr[0].Value.(string),
-			},
-		}, nil
-
-	} else if expr[0].Type == scanner.TOKEN_TYPE_CONSTANT {
-		return Node{
-			Type: NODE_TYPE_CONSTANT,
-			Value: NodeValueConstant{
-				Name: expr[0].Value.(string),
-			},
-		}, nil
-
-	} else if expr[0].Type == scanner.TOKEN_TYPE_FUNCTION {
-		__arg, err := parseExpressionNode(readParentheses(expr))
-		if err != nil {
-			return Node{}, err
-		}
-
-		return Node{
-			Type: NODE_TYPE_FUNCTION_CALL,
-			Value: NodeValueFunction{
-				Name:     expr[0].Value.(string),
-				Argument: __arg,
-			},
-		}, nil
-	}
-
-	return Node{}, nil
-}
-
-func parseBinary(expr []scanner.Token) Node {
-	var oper string = ""
+// Parses given expression as binary. If expression is not binary, returns
+// [ErrNotABinaryExpression] error.
+func parseBinary(expr []scanner.Token) (NodeBinary, error) {
+	oper := scanner.TokenOperator{}
 	left := []scanner.Token{}
 	right := []scanner.Token{}
 
@@ -229,53 +108,238 @@ func parseBinary(expr []scanner.Token) Node {
 	isLeftRead := false
 
 	for _, t := range expr {
-		if isLeftRead {
-			right = append(right, t)
-			continue
-		}
-
-		if t.Type == scanner.TOKEN_TYPE_OPERATOR && depth == 0 {
-			oper = t.Value.(string)
-			isLeftRead = true
-			continue
-		} else {
-			left = append(left, t)
-			if t.Value == scanner.PUNCTUATION_LPAREN {
-				depth++
-			} else if t.Value == scanner.PUNCTUATION_RPAREN && depth > 0 {
-				depth--
+		tOper, ok := t.(scanner.TokenOperator)
+		if ok && depth == 0 {
+			if isLeftRead {
+				left = append(left, oper)
+				left = append(left, right...)
+				oper = tOper
+				right = right[:0]
+			} else {
+				oper = tOper
+				isLeftRead = true
+				continue
 			}
-			continue
+		} else {
+			if isLeftRead {
+				right = append(right, t)
+			} else {
+				left = append(left, t)
+			}
+
+			tPunc, ok := t.(scanner.TokenPunctuation)
+			if ok {
+				if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+					depth++
+				} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN {
+					if depth > 0 {
+						depth--
+					} else {
+						return NodeBinary{}, ErrMismatchedParenthesis
+					}
+				}
+			}
 		}
 	}
 
-	if isLeftRead {
-		return Node{
-			Type: NODE_TYPE_BINARY,
-			Value: _NodeValueBinary{
-				Operator: oper,
-				Left:     left,
-				Right:    right,
-			},
-		}
-	} else {
-		return Node{
-			Type:  NODE_TYPE_EXPRESSION,
-			Value: left,
-		}
+	if !isLeftRead {
+		return NodeBinary{}, ErrNotABinaryExpression
 	}
+
+	leftParsed, err := parseExpression(left)
+	if err != nil {
+		return NodeBinary{}, err
+	}
+
+	rightParsed, err := parseExpression(right)
+	if err != nil {
+		return NodeBinary{}, err
+	}
+
+	return NodeBinary{
+		Operator: oper.Value,
+		Left:     leftParsed,
+		Right:    rightParsed,
+	}, nil
 }
 
-/* Parser main ***************************************************************/
+type FunctionType int
 
-func Parse(tl []scanner.Token) (Node, error) {
-	v, err := parseExpressionNode(parenthesizeExpression(unUnaryExpression(tl)))
-	if err != nil {
-		return Node{}, err
+const (
+	FUNCTYPE_DEFAULT FunctionType = iota
+	// Function F(I=N..M, X) where F - name of the function, I - name of
+	// the variable, N - range start (inc.), M - range end (inc.), X -
+	// expression (where the use of variable I are permitted).
+	FUNCTYPE_IRANGE
+)
+
+func parseIRangeFunctionMainArg(arg []scanner.Token) (NodeIRangeFuncMainArg, error) {
+	node := NodeIRangeFuncMainArg{}
+
+	if len(arg) < 5 {
+		return node, fmt.Errorf("not enough tokens in main argument of IRANGE function")
 	}
 
-	return Node{
-		Type:  NODE_TYPE_ROOT,
+	if len(arg) > 5 {
+		return node, fmt.Errorf("too much tokens in main argument of IRANGE function")
+	}
+
+	// variable
+
+	argVar, ok := arg[0].(scanner.TokenWord)
+	if !ok {
+		return node, fmt.Errorf("expected a variable")
+	}
+	if slices.Contains(lexemes.DEFINED_CONSTANTS, argVar.Value) {
+		return node, ErrVarAsConst
+	}
+
+	node.Variable = NodeVariable{
+		Name: argVar.Value,
+	}
+
+	// assign operator
+
+	argAss, ok := arg[1].(scanner.TokenOperator)
+	if !ok || argAss.Value != lexemes.OPERATOR_ASS {
+		return node, fmt.Errorf("expected an assign operator")
+	}
+
+	// range
+
+	argRangeNode, err := parseRange(arg[2:])
+	if err != nil {
+		return node, err
+	}
+
+	node.Range = argRangeNode
+
+	return node, nil
+}
+
+func parseFunctionArgs(tl []scanner.Token, funcType FunctionType) ([]Node, error) {
+	args := []Node{}
+
+	sliced, err := SliceTokenListByComma(tl)
+	if err != nil {
+		return args, err
+	}
+
+	switch funcType {
+	case FUNCTYPE_DEFAULT:
+		{
+			for _, expr := range sliced {
+				parsedExpr, err := parseExpression(expr)
+				if err != nil {
+					return args, err
+				}
+
+				args = append(args, parsedExpr)
+			}
+		}
+
+	case FUNCTYPE_IRANGE:
+		{
+			argsLen := len(sliced)
+			if argsLen != 2 {
+				return args, fmt.Errorf("expected 2 arguments in IRANGE function, but got %d", argsLen)
+			}
+
+			mainArgExpr := sliced[0]
+			secondaryArgExpr := sliced[1]
+
+			mainArg, err := parseIRangeFunctionMainArg(mainArgExpr)
+			if err != nil {
+				return args, err
+			}
+
+			args = append(args, mainArg)
+
+			secondaryArg, err := parseExpression(secondaryArgExpr)
+			if err != nil {
+				return args, err
+			}
+
+			args = append(args, secondaryArg)
+		}
+
+	default:
+		return args, fmt.Errorf("undefined funcType %d", funcType)
+	}
+
+	return args, nil
+}
+
+//
+
+func parseExpression(expr []scanner.Token) (Node, error) {
+	if len(expr) == 0 {
+		return InvalidNode{}, ErrEmptyExpression
+	}
+
+	switch firstToken := expr[0].(type) {
+	case scanner.TokenPunctuation:
+		if firstToken.Value == lexemes.PUNCTUATION_LPAREN {
+			if isBinary(expr) {
+				return parseBinary(expr)
+			} else {
+				return parseExpression(readParentheses(expr))
+			}
+		}
+
+	case scanner.TokenNumber:
+		return NodeNumber{
+			Value: firstToken.Value,
+		}, nil
+
+	case scanner.TokenWord:
+		if len(expr) > 1 {
+			switch followUpToken := expr[1].(type) {
+			case scanner.TokenPunctuation:
+				{
+					// if it is a function
+					if followUpToken.Value == lexemes.PUNCTUATION_LPAREN {
+						funcName := firstToken.Value
+						funcType := FUNCTYPE_DEFAULT
+
+						if lexemes.IsIRangeFunction(funcName) {
+							funcType = FUNCTYPE_IRANGE
+						}
+
+						args, err := parseFunctionArgs(readParentheses(expr), funcType)
+
+						return NodeFuncCall{
+							Name:      funcName,
+							Arguments: args,
+						}, err
+					}
+				}
+
+			default:
+				return InvalidNode{}, fmt.Errorf("word followed by unexpected token %s", followUpToken.Type())
+			}
+
+		} else {
+			if slices.Contains(lexemes.DEFINED_CONSTANTS, firstToken.Value) {
+				return NodeConstant{
+					Name: firstToken.Value,
+				}, nil
+			} else {
+				return NodeVariable{
+					Name: firstToken.Value,
+				}, nil
+			}
+		}
+	}
+
+	return InvalidNode{}, fmt.Errorf("failed to parse an expression")
+}
+
+func Parse(tl []scanner.Token) (NodeRoot, error) {
+	normalised := UnUnaryExpression(tl)
+	v, err := parseExpression(ParenthesiseExpression(normalised))
+
+	return NodeRoot{
 		Value: v,
-	}, nil
+	}, err
 }

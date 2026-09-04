@@ -2,162 +2,175 @@ package interpreter
 
 import (
 	"fmt"
+	"gocalc/interpreter/lexemes"
 	"gocalc/interpreter/parser"
 	"gocalc/interpreter/scanner"
 	"math"
 )
 
-func solveNode(node parser.Node) (float64, error) {
-
-	if node.Type == parser.NODE_TYPE_BINARY {
-		return solveBinary(node)
+func solveBinary(node parser.NodeBinary) (float64, error) {
+	left, err := solveNode(node.Left)
+	if err != nil {
+		return 0, err
 	}
 
-	switch node.Type {
+	right, err := solveNode(node.Right)
+	if err != nil {
+		return 0, err
+	}
 
-	case parser.NODE_TYPE_NUMBER:
+	switch node.Operator {
+	case lexemes.OPERATOR_ADD:
+		return left + right, nil
+
+	case lexemes.OPERATOR_SUB:
+		return left - right, nil
+
+	case lexemes.OPERATOR_MUL:
+		return left * right, nil
+
+	case lexemes.OPERATOR_DIV:
+		return left / right, nil
+
+	case lexemes.OPERATOR_POW:
+		return math.Pow(left, right), nil
+
+	default:
+		return 0, fmt.Errorf("undefined operator \"%s\"", node.Operator)
+	}
+}
+
+func solveNode(node parser.Node) (float64, error) {
+	nodeBin, isBin := node.(parser.NodeBinary)
+	if isBin {
+		return solveBinary(nodeBin)
+	}
+
+	switch typedNode := node.(type) {
+	case parser.NodeNumber:
+		return typedNode.Value, nil
+
+	case parser.NodeConstant:
 		{
-			n, ok := node.Value.(float64)
-			if ok {
-				return n, nil
-			} else {
-				return 0, fmt.Errorf("Failed type assertion : number node value is not a float64.")
-			}
-		}
-
-	case parser.NODE_TYPE_CONSTANT:
-		{
-			nodeValue := node.Value.(parser.NodeValueConstant)
-
-			constName := nodeValue.Name
+			constName := typedNode.Name
 
 			switch constName {
-			case scanner.CONSTANT_PI:
+			case lexemes.CONSTANT_PI:
 				return math.Pi, nil
 
-			case scanner.CONSTANT_E:
+			case lexemes.CONSTANT_E:
 				return math.E, nil
 
-			case scanner.CONSTANT_PHI:
+			case lexemes.CONSTANT_PHI:
 				return math.Phi, nil
 
 			default:
-				return 0, fmt.Errorf("Undefined constant \"%s\".", constName)
+				return 0, fmt.Errorf("undefined constant \"%s\"", constName)
 			}
 		}
 
-	case parser.NODE_TYPE_FUNCTION_CALL:
+	case parser.NodeFuncCall:
 		{
-			nodeValue := node.Value.(parser.NodeValueFunction)
+			funcName := typedNode.Name
 
-			funcName := nodeValue.Name
-			funcArg, err := solveNode(nodeValue.Argument)
-			if err != nil {
-				return 0, err
+			_, isIRangeFunc := typedNode.Arguments[0].(parser.NodeIRangeFuncMainArg)
+			if isIRangeFunc {
+				//
 			}
+
+			funcArgs := []float64{}
+			for _, arg := range typedNode.Arguments {
+				f, err := solveNode(arg)
+				if err != nil {
+					return 0, err
+				}
+
+				funcArgs = append(funcArgs, f)
+			}
+
+			argc := len(funcArgs)
 
 			switch funcName {
-			case scanner.FUNCTION_SIN:
-				return math.Sin(funcArg), nil
+			case lexemes.FUNCTION_SIN:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Sin(funcArgs[0]), nil
 
-			case scanner.FUNCTION_COS:
-				return math.Cos(funcArg), nil
+			case lexemes.FUNCTION_COS:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Cos(funcArgs[0]), nil
 
-			case scanner.FUNCTION_TAN:
-				return math.Tan(funcArg), nil
+			case lexemes.FUNCTION_TAN:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Tan(funcArgs[0]), nil
 
-			case scanner.FUNCTION_ATAN:
-				return math.Atan(funcArg), nil
+			case lexemes.FUNCTION_ATAN:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Atan(funcArgs[0]), nil
 
-			case scanner.FUNCTION_EXP:
-				return math.Exp(funcArg), nil
+			case lexemes.FUNCTION_EXP:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Exp(funcArgs[0]), nil
 
-			case scanner.FUNCTION_ABS:
-				return math.Abs(funcArg), nil
+			case lexemes.FUNCTION_ABS:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Abs(funcArgs[0]), nil
 
-			case scanner.FUNCTION_LOG:
-				return math.Log10(funcArg), nil
+			case lexemes.FUNCTION_LOG:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Log10(funcArgs[0]), nil
 
-			case scanner.FUNCTION_LN:
-				return math.Log(funcArg), nil
+			case lexemes.FUNCTION_LN:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Log(funcArgs[0]), nil
 
-			case scanner.FUNCTION_SQRT:
-				return math.Sqrt(funcArg), nil
+			case lexemes.FUNCTION_SQRT:
+				if argc != 1 {
+					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+				}
+				return math.Sqrt(funcArgs[0]), nil
 
 			default:
-				return 0, fmt.Errorf("Undefined function \"%s\".", funcName)
+				return 0, fmt.Errorf("undefined function \"%s\"", funcName)
 			}
 		}
 
 	default:
-		return 0, fmt.Errorf("Undefined node type \"%s\".", node.Type)
-
+		return 0, fmt.Errorf("undefined node type \"%s\"", node.Type())
 	}
 }
 
-func solveBinary(node parser.Node) (float64, error) {
-	if node.Type != parser.NODE_TYPE_BINARY {
-		return 0, fmt.Errorf("The node type is \"%s\", expected \"%s\".", node.Type, parser.NODE_TYPE_BINARY)
-	}
-
-	nodeValue := node.Value.(parser.NodeValueBinary)
-
-	binOper := nodeValue.Operator
-	binLeft, err := solveNode(nodeValue.Left)
+func CompileToAST(s string) (parser.NodeRoot, error) {
+	tl, err := scanner.Scan(s)
 	if err != nil {
-		return 0, err
+		return parser.NodeRoot{}, err
 	}
-	binRight, err := solveNode(nodeValue.Right)
+
+	ast, err := parser.Parse(tl)
 	if err != nil {
-		return 0, err
+		return parser.NodeRoot{}, err
 	}
 
-	switch binOper {
-	case scanner.OPERATOR_ADD:
-		return binLeft + binRight, nil
-
-	case scanner.OPERATOR_SUB:
-		return binLeft - binRight, nil
-
-	case scanner.OPERATOR_MUL:
-		return binLeft * binRight, nil
-
-	case scanner.OPERATOR_DIV:
-		return binLeft / binRight, nil
-
-	case scanner.OPERATOR_POW:
-		return math.Pow(binLeft, binRight), nil
-
-	default:
-		return 0, fmt.Errorf("Undefined operator \"%s\".", binOper)
-	}
+	return ast, nil
 }
 
-func CompileToAST(s string) (parser.Node, error) {
-	sc, err := scanner.Scan(s)
-	if err != nil {
-		return parser.Node{}, err
-	}
-
-	p, err := parser.Parse(sc)
-	if err != nil {
-		return parser.Node{}, err
-	}
-
-	return p, nil
-}
-
-func EvaluateAST(ast parser.Node) (float64, error) {
-	if ast.Type != parser.NODE_TYPE_ROOT {
-		return 0, fmt.Errorf("Expected an AST root, but got \"%s\".", ast.Type)
-	}
-
-	v, ok := ast.Value.(parser.Node)
-	if !ok {
-		return 0, fmt.Errorf("Failed type assertion : ASTRoot.Value is not a node.")
-	}
-
-	return solveNode(v)
+func EvaluateAST(ast parser.NodeRoot) (float64, error) {
+	return solveNode(ast.Value)
 }
 
 func EvaluateString(s string) (float64, error) {
