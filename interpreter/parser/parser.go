@@ -166,6 +166,7 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 type FunctionType int
 
 const (
+	// Function F(X) where F - name of the function, X - expression.
 	FUNCTYPE_DEFAULT FunctionType = iota
 	// Function F(I=N..M, X) where F - name of the function, I - name of
 	// the variable, N - range start (inc.), M - range end (inc.), X -
@@ -178,10 +179,6 @@ func parseIRangeFunctionMainArg(arg []scanner.Token) (NodeIRangeFuncMainArg, err
 
 	if len(arg) < 5 {
 		return node, fmt.Errorf("not enough tokens in main argument of IRANGE function")
-	}
-
-	if len(arg) > 5 {
-		return node, fmt.Errorf("too much tokens in main argument of IRANGE function")
 	}
 
 	// variable
