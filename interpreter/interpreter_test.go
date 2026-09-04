@@ -107,6 +107,18 @@ func TestEvaluateString(t *testing.T) {
 			input:    "-(-1)",
 			expected: "1",
 		},
+		{
+			input:    "SUM(I=1..5, I)",
+			expected: "15",
+		},
+		{
+			input:    "-SUM(I=2..6, I) + 5",
+			expected: "-15",
+		},
+		{
+			input:    "SUM(I=1..10, I * 2)",
+			expected: "110",
+		},
 	}
 
 	for i, test := range tests {

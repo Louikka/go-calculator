@@ -8,13 +8,18 @@ import (
 	"math"
 )
 
-func solveBinary(node parser.NodeBinary) (float64, error) {
-	left, err := solveNode(node.Left)
+type _VariableContext struct {
+	Name  string
+	Value float64
+}
+
+func solveBinary(node parser.NodeBinary, varCtx []_VariableContext) (float64, error) {
+	left, err := solveNode(node.Left, varCtx)
 	if err != nil {
 		return 0, err
 	}
 
-	right, err := solveNode(node.Right)
+	right, err := solveNode(node.Right, varCtx)
 	if err != nil {
 		return 0, err
 	}
@@ -40,15 +45,171 @@ func solveBinary(node parser.NodeBinary) (float64, error) {
 	}
 }
 
-func solveNode(node parser.Node) (float64, error) {
-	nodeBin, isBin := node.(parser.NodeBinary)
-	if isBin {
-		return solveBinary(nodeBin)
+func solveDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
+	funcName := node.Name
+	funcArgc := len(node.Arguments)
+
+	funcArgs := []float64{}
+	for _, arg := range node.Arguments {
+		f, err := solveNode(arg, []_VariableContext{})
+		if err != nil {
+			return 0, err
+		}
+
+		funcArgs = append(funcArgs, f)
 	}
+
+	switch funcName {
+	case lexemes.FUNCTION_SIN:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Sin(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_COS:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Cos(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_TAN:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Tan(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_ATAN:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Atan(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_EXP:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Exp(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_ABS:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Abs(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_LOG:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Log10(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_LN:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Log(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_SQRT:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s function expected 1 argument", funcName)
+			}
+
+			return math.Sqrt(funcArgs[0]), nil
+		}
+
+	default:
+		return 0, fmt.Errorf("undefined function \"%s\"", funcName)
+	}
+}
+
+func solveIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
+	funcName := node.Name
+	funcArgc := len(node.Arguments)
+
+	if funcArgc != 2 {
+		return 0, fmt.Errorf("%s expected 2 arguments, but got %d", funcName, funcArgc)
+	}
+
+	mainArg, isIRangeFunc := node.Arguments[0].(parser.NodeIRangeFuncMainArg)
+	if !isIRangeFunc {
+		return 0, fmt.Errorf("expected an IRANGE function")
+	}
+
+	secondArg := node.Arguments[1]
+
+	var cum float64 = 0
+	for i := mainArg.Range.Start; i <= mainArg.Range.End; i++ {
+		iterationRes, err := solveNode(secondArg, []_VariableContext{
+			{
+				Name:  mainArg.Variable.Name,
+				Value: float64(i),
+			},
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		switch funcName {
+		case lexemes.FUNCTION_SUM:
+			cum += iterationRes
+
+		default:
+			return 0, fmt.Errorf("undefined function \"%s\"", funcName)
+		}
+	}
+
+	return cum, nil
+}
+
+func solveFuncCall(node parser.NodeFuncCall) (float64, error) {
+	_, isIRangeFunc := node.Arguments[0].(parser.NodeIRangeFuncMainArg)
+	if isIRangeFunc {
+		return solveIRangeFuncCall(node)
+	}
+
+	return solveDefaultFuncCall(node)
+}
+
+func solveNode(node parser.Node, varCtx []_VariableContext) (float64, error) {
 
 	switch typedNode := node.(type) {
 	case parser.NodeNumber:
 		return typedNode.Value, nil
+
+	case parser.NodeVariable:
+		{
+			for _, ctx := range varCtx {
+				if ctx.Name == typedNode.Name {
+					return ctx.Value, nil
+				}
+			}
+
+			return 0, fmt.Errorf("cannot find variable contenx")
+		}
 
 	case parser.NodeConstant:
 		{
@@ -70,85 +231,10 @@ func solveNode(node parser.Node) (float64, error) {
 		}
 
 	case parser.NodeFuncCall:
-		{
-			funcName := typedNode.Name
+		return solveFuncCall(typedNode)
 
-			_, isIRangeFunc := typedNode.Arguments[0].(parser.NodeIRangeFuncMainArg)
-			if isIRangeFunc {
-				//
-			}
-
-			funcArgs := []float64{}
-			for _, arg := range typedNode.Arguments {
-				f, err := solveNode(arg)
-				if err != nil {
-					return 0, err
-				}
-
-				funcArgs = append(funcArgs, f)
-			}
-
-			argc := len(funcArgs)
-
-			switch funcName {
-			case lexemes.FUNCTION_SIN:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Sin(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_COS:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Cos(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_TAN:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Tan(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_ATAN:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Atan(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_EXP:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Exp(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_ABS:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Abs(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_LOG:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Log10(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_LN:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Log(funcArgs[0]), nil
-
-			case lexemes.FUNCTION_SQRT:
-				if argc != 1 {
-					return 0, fmt.Errorf("%s function expected 1 argument", funcName)
-				}
-				return math.Sqrt(funcArgs[0]), nil
-
-			default:
-				return 0, fmt.Errorf("undefined function \"%s\"", funcName)
-			}
-		}
+	case parser.NodeBinary:
+		return solveBinary(typedNode, varCtx)
 
 	default:
 		return 0, fmt.Errorf("undefined node type \"%s\"", node.Type())
@@ -170,7 +256,7 @@ func CompileToAST(s string) (parser.NodeRoot, error) {
 }
 
 func EvaluateAST(ast parser.NodeRoot) (float64, error) {
-	return solveNode(ast.Value)
+	return solveNode(ast.Value, []_VariableContext{})
 }
 
 func EvaluateString(s string) (float64, error) {
