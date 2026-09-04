@@ -58,7 +58,7 @@ func main() {
 
 		ast, err := interpreter.CompileToAST(s)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error:", err)
 			return
 		}
 
@@ -75,7 +75,7 @@ func main() {
 
 		n, err := interpreter.EvaluateAST(ast)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error:", err)
 			return
 		}
 

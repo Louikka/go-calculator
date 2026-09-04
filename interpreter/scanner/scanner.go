@@ -221,7 +221,7 @@ func Scan(s string) ([]Token, error) {
 
 	scanner := NewScanner(s)
 	if scanner.IsEmpty() {
-		return []Token{}, fmt.Errorf("Entered empty string.")
+		return []Token{}, nil
 	}
 
 	for !scanner.isEnd() {
