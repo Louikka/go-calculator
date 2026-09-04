@@ -198,6 +198,49 @@ func TestScanner_IsEmpty(t *testing.T) {
 	}
 }
 
+func TestScanner_ReadNumber(t *testing.T) {
+	tests := []struct {
+		s        string
+		expected string
+	}{
+		{
+			s:        "1",
+			expected: "1",
+		},
+		{
+			s:        "1.2",
+			expected: "1.2",
+		},
+		{
+			s:        "3e4",
+			expected: "30000",
+		},
+		{
+			s:        "5e-6",
+			expected: "0.000005",
+		},
+		{
+			s:        "1.",
+			expected: "1",
+		},
+		{
+			s:        "1.a",
+			expected: "1",
+		},
+	}
+
+	for i, test := range tests {
+		scanner := NewScanner(test.s)
+		n, err := scanner.readNumber()
+		if err != nil {
+			t.Errorf("(case no.%d) error => %s", i, err)
+		}
+		if n.ToString() != test.expected {
+			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, n.ToString())
+		}
+	}
+}
+
 func TestScannerOutput(t *testing.T) {
 	tests := []string{
 		"0",

@@ -2,59 +2,102 @@ package interpreter
 
 import (
 	"math"
+	"strconv"
 	"testing"
 )
 
-type _TestSpec struct {
-	input          string
-	expectedResult float64
+func toString(n float64) string {
+	return strconv.FormatFloat(n, 'f', -1, 64)
 }
 
-func TestInterpreterEvaluationFromString(t *testing.T) {
-	tests := []_TestSpec{
+func TestEvaluateString(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
 		{
-			input:          "1 + 2",
-			expectedResult: 3,
+			input:    "1 + 2",
+			expected: "3",
 		},
 		{
-			input:          "1.2 + 3.4",
-			expectedResult: 4.6,
+			input:    "1 - 2 + 3",
+			expected: "2",
 		},
 		{
-			input:          "10 - 5.4",
-			expectedResult: 4.6,
+			input:    "1 - 2 + 3 - 4",
+			expected: "-2",
 		},
 		{
-			input:          "2 * 46",
-			expectedResult: 92,
+			input:    "1 * 2 / 3 * 4",
+			expected: toString(1.0 * 2.0 / 3.0 * 4.0),
 		},
 		{
-			input:          "51 / 3",
-			expectedResult: 17,
+			input:    "1.2 + 3.4",
+			expected: "4.6",
 		},
 		{
-			input:          "2 ^ 7",
-			expectedResult: 128,
+			input:    "10 - 5.4",
+			expected: "4.6",
 		},
 		{
-			input:          "PI * 3",
-			expectedResult: 9.425,
+			input:    "2 * 46",
+			expected: "92",
 		},
 		{
-			input:          "ABS(-12.5)",
-			expectedResult: 12.5,
+			input:    "51 / 3",
+			expected: "17",
+		},
+		{
+			input:    "2 ^ 7",
+			expected: "128",
+		},
+		{
+			input:    "2 - 3 * 4",
+			expected: "-10",
+		},
+		{
+			input:    "2 * 3 - 4",
+			expected: "2",
+		},
+		{
+			input:    "PI * 3",
+			expected: toString(math.Pi * 3),
+		},
+		{
+			input:    "ABS(-12.5)",
+			expected: "12.5",
+		},
+		{
+			input:    "-1 + 2",
+			expected: "1",
+		},
+		{
+			input:    "-1 / 4",
+			expected: "-0.25",
+		},
+		{
+			input:    "-1 / 4 + 0.25",
+			expected: "0",
+		},
+		{
+			input:    "-(1 + 2)",
+			expected: "-3",
+		},
+		{
+			input:    "-(-1)",
+			expected: "1",
 		},
 	}
 
-	for _, test := range tests {
+	for i, test := range tests {
 		res, err := EvaluateString(test.input)
 		if err != nil {
-			t.Errorf("error in string evaluation => \"%s\".", err)
+			t.Errorf("(case no.%d) error => %s", i, err)
 		}
 
-		rounded := math.Round(res*1000) / 1000
-		if test.expectedResult != rounded {
-			t.Errorf("string evaluation outputs are not equal => %f != %f.", test.expectedResult, rounded)
+		toStr := toString(res)
+		if toStr != test.expected {
+			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, toStr)
 		}
 	}
 }
