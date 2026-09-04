@@ -3,12 +3,15 @@ package scanner
 import (
 	"math"
 	"strconv"
+	"strings"
 )
 
 type Token interface {
 	Type() string
 	ToString() string
 }
+
+// invalid
 
 type InvalidToken struct {
 	//
@@ -26,6 +29,12 @@ func (t InvalidToken) ToString() string {
 
 type TokenNumber struct {
 	Value float64
+}
+
+func NewTokenNumber(v float64) TokenNumber {
+	return TokenNumber{
+		Value: v,
+	}
 }
 
 func (t TokenNumber) Type() string {
@@ -60,6 +69,12 @@ type TokenOperator struct {
 	Value string
 }
 
+func NewTokenOperator(v string) TokenOperator {
+	return TokenOperator{
+		Value: v,
+	}
+}
+
 func (t TokenOperator) Type() string {
 	return "OPERATOR"
 }
@@ -74,10 +89,28 @@ type TokenPunctuation struct {
 	Value string
 }
 
+func NewTokenPunctuation(v string) TokenPunctuation {
+	return TokenPunctuation{
+		Value: v,
+	}
+}
+
 func (t TokenPunctuation) Type() string {
 	return "PUNCTUATION"
 }
 
 func (t TokenPunctuation) ToString() string {
 	return t.Value
+}
+
+/* Helpers *******************************************************************/
+
+func StringifyTokens(tl []Token) string {
+	var s strings.Builder
+
+	for _, t := range tl {
+		s.WriteString(t.ToString())
+	}
+
+	return s.String()
 }

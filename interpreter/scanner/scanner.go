@@ -100,8 +100,12 @@ func (s *Scanner) readNumber() (TokenNumber, error) {
 				return false, nil
 			}
 
-			isFloat = true
-			return true, nil
+			if isDigit(after) {
+				isFloat = true
+				return true, nil
+			} else {
+				return false, nil
+			}
 		}
 
 		if char == 'E' && (after == '-' || isDigit(after)) {
@@ -185,7 +189,7 @@ func (s *Scanner) scanNextToken() (Token, error) {
 	}
 
 	if s.isEnd() {
-		return InvalidToken{}, fmt.Errorf("end of string encountered")
+		return InvalidToken{}, ErrEndOfInput
 	}
 
 	char, err := s.peek(0)
@@ -223,7 +227,7 @@ func Scan(s string) ([]Token, error) {
 	for !scanner.isEnd() {
 		t, err := scanner.scanNextToken()
 		if err != nil {
-			return []Token{}, err
+			return output, err
 		}
 
 		output = append(output, t)
