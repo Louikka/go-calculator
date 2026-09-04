@@ -36,7 +36,7 @@ func TestEvaluateString(t *testing.T) {
 			expected: "4.6",
 		},
 		{
-			input:    "10 - 5.4",
+			input:    "(10 - 5.4)",
 			expected: "4.6",
 		},
 		{
@@ -66,6 +66,26 @@ func TestEvaluateString(t *testing.T) {
 		{
 			input:    "ABS(-12.5)",
 			expected: "12.5",
+		},
+		{
+			input:    "-ABS(-7e-2)",
+			expected: "-0.07",
+		},
+		{
+			input:    "abs(cos(pi))",
+			expected: "1",
+		},
+		{
+			input:    "ABS(SIN(3 * pi / 2))",
+			expected: "1",
+		},
+		{
+			input:    "SIN(pi) + COS (PI) - 1",
+			expected: "-2",
+		},
+		{
+			input:    "(SQRT(9) - ABS(-3 + 1)) * (9e3 + 999)",
+			expected: "9999",
 		},
 		{
 			input:    "-1 + 2",

@@ -39,6 +39,7 @@ func UnUnaryExpression(expr []scanner.Token) []scanner.Token {
 	return out
 }
 
+// Parentheses an expression (excluding function calls) -
 // https://en.wikipedia.org/wiki/Operator-precedence_parser#Full_parenthesization
 func ParenthesiseExpression(input []scanner.Token) []scanner.Token {
 
@@ -49,10 +50,13 @@ func ParenthesiseExpression(input []scanner.Token) []scanner.Token {
 
 	output = append(output, tLParen, tLParen, tLParen, tLParen)
 
-	for _, t := range input {
+	isFunc := false
+	funcDepth := 0
+
+	for i, t := range input {
 		switch tok := t.(type) {
 		case scanner.TokenOperator:
-			{
+			if !isFunc {
 				switch tok.Value {
 				case lexemes.OPERATOR_POW:
 					output = append(output, tRParen, tok, tLParen)
@@ -72,16 +76,45 @@ func ParenthesiseExpression(input []scanner.Token) []scanner.Token {
 				default:
 					output = append(output, tok)
 				}
+			} else {
+				output = append(output, tok)
 			}
 
 		case scanner.TokenPunctuation:
 			{
 				switch tok.Value {
 				case lexemes.PUNCTUATION_LPAREN:
-					output = append(output, tLParen, tLParen, tLParen, tLParen)
+					{
+						if isFunc {
+							funcDepth++
+						}
+
+						if i > 0 {
+							// if previous token is a word (i.e function call)
+							_, ok := input[i-1].(scanner.TokenWord)
+							if ok {
+								output = append(output, tok)
+								isFunc = true
+								continue
+							}
+						}
+
+						output = append(output, tLParen, tLParen, tLParen, tLParen)
+					}
 
 				case lexemes.PUNCTUATION_RPAREN:
-					output = append(output, tRParen, tRParen, tRParen, tRParen)
+					{
+						if isFunc {
+							if funcDepth > 0 {
+								funcDepth--
+							} else {
+								output = append(output, tok)
+								isFunc = false
+							}
+						} else {
+							output = append(output, tRParen, tRParen, tRParen, tRParen)
+						}
+					}
 
 				default:
 					output = append(output, tok)
@@ -104,19 +137,26 @@ func SliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
 
 	depth := 0
 
-	groups = append(groups, []scanner.Token{})
+	if len(tl) == 0 {
+		return groups, nil
+	} else {
+		groups = append(groups, []scanner.Token{})
+	}
 
 	for _, t := range tl {
 		tPunc, ok := t.(scanner.TokenPunctuation)
 		if ok {
-			if tPunc.Value == lexemes.PUNCTUATION_COMMA && depth == 0 {
-				groups = append(groups, []scanner.Token{})
-				continue
-			}
+			switch tPunc.Value {
+			case lexemes.PUNCTUATION_COMMA:
+				if depth == 0 {
+					groups = append(groups, []scanner.Token{})
+					continue
+				}
 
-			if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+			case lexemes.PUNCTUATION_LPAREN:
 				depth++
-			} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN {
+
+			case lexemes.PUNCTUATION_RPAREN:
 				if depth > 0 {
 					depth--
 				} else {
@@ -125,7 +165,8 @@ func SliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
 			}
 		}
 
-		groups[len(groups)-1] = append(groups[len(groups)-1], t)
+		groupsLastIndex := len(groups) - 1
+		groups[groupsLastIndex] = append(groups[groupsLastIndex], t)
 	}
 
 	return groups, nil

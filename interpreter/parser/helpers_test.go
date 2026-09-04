@@ -102,12 +102,20 @@ func TestParenthesiseExpression(t *testing.T) {
 			expected: "((((1)))+(((PI))))",
 		},
 		{
-			input:    "1.2 * COS(3)",
-			expected: "((((1.2))*((COS((((3))))))))",
+			input:    "SQRT(1.23)",
+			expected: "((((SQRT(1.23)))))",
+		},
+		{
+			input:    "EXP(-2)",
+			expected: "((((EXP(-2)))))",
+		},
+		{
+			input:    "1.2 + COS(3)",
+			expected: "((((1.2)))+(((COS(3)))))",
 		},
 		{
 			input:    "12e3 / SUM(I=1..3, I)",
-			expected: "((((12000))/((SUM((((I=1..3,I))))))))",
+			expected: "((((12000))/((SUM(I=1..3,I)))))",
 		},
 	}
 

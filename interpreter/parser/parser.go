@@ -65,7 +65,7 @@ func parseRange(expr []scanner.Token) (NodeRange, error) {
 
 	end, ok := expr[2].(scanner.TokenNumber)
 	if !ok || !end.IsInt() {
-		return node, fmt.Errorf("expected a range start (an integer)")
+		return node, fmt.Errorf("expected a range end (an integer)")
 	}
 
 	node.End = int(end.Value)
@@ -143,7 +143,7 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 	}
 
 	if !isLeftRead {
-		return NodeBinary{}, ErrNotABinaryExpression
+		return NodeBinary{}, fmt.Errorf("not a binary expression")
 	}
 
 	leftParsed, err := parseExpression(left)
@@ -227,22 +227,20 @@ func parseFunctionArgs(tl []scanner.Token, funcType FunctionType) ([]Node, error
 
 	switch funcType {
 	case FUNCTYPE_DEFAULT:
-		{
-			for _, expr := range sliced {
-				parsedExpr, err := parseExpression(expr)
-				if err != nil {
-					return args, err
-				}
-
-				args = append(args, parsedExpr)
+		for _, expr := range sliced {
+			parsedExpr, err := parseExpression(ParenthesiseExpression(expr))
+			if err != nil {
+				return args, err
 			}
+
+			args = append(args, parsedExpr)
 		}
 
 	case FUNCTYPE_IRANGE:
 		{
 			argsLen := len(sliced)
 			if argsLen != 2 {
-				return args, fmt.Errorf("expected 2 arguments in IRANGE function, but got %d", argsLen)
+				return args, fmt.Errorf("expected 2 arguments, but got %d", argsLen)
 			}
 
 			mainArgExpr := sliced[0]
@@ -255,7 +253,7 @@ func parseFunctionArgs(tl []scanner.Token, funcType FunctionType) ([]Node, error
 
 			args = append(args, mainArg)
 
-			secondaryArg, err := parseExpression(secondaryArgExpr)
+			secondaryArg, err := parseExpression(ParenthesiseExpression(secondaryArgExpr))
 			if err != nil {
 				return args, err
 			}
@@ -274,7 +272,7 @@ func parseFunctionArgs(tl []scanner.Token, funcType FunctionType) ([]Node, error
 
 func parseExpression(expr []scanner.Token) (Node, error) {
 	if len(expr) == 0 {
-		return InvalidNode{}, ErrEmptyExpression
+		return InvalidNode{}, fmt.Errorf("empty expression")
 	}
 
 	switch firstToken := expr[0].(type) {
