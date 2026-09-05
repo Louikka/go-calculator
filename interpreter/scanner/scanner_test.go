@@ -241,6 +241,49 @@ func TestScanner_ReadNumber(t *testing.T) {
 	}
 }
 
+func TestScanner_ReadWord(t *testing.T) {
+	tests := []struct {
+		s        string
+		expected string
+	}{
+		{
+			s:        "PI",
+			expected: "PI",
+		},
+		{
+			s:        "e",
+			expected: "E",
+		},
+		{
+			s:        "SQRT()",
+			expected: "SQRT",
+		},
+		{
+			s:        "SQRT2",
+			expected: "SQRT2",
+		},
+		{
+			s:        "SQRT3 * 4.5",
+			expected: "SQRT3",
+		},
+		{
+			s:        "SQRT5+SQRT(6)",
+			expected: "SQRT5",
+		},
+	}
+
+	for i, test := range tests {
+		scanner := NewScanner(test.s)
+		w, err := scanner.readWord()
+		if err != nil {
+			t.Errorf("(case no.%d) error => %s", i, err)
+		}
+		if w.ToString() != test.expected {
+			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, w.ToString())
+		}
+	}
+}
+
 func TestScannerOutput(t *testing.T) {
 	tests := []string{
 		"0",

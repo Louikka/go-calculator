@@ -135,8 +135,8 @@ func (s *Scanner) readNumber() (TokenNumber, error) {
 }
 
 func (s *Scanner) readWord() (TokenWord, error) {
-	w, err := s.readwhile(func(char, _, _ byte, _ string) (bool, error) {
-		return isLetter(char), nil
+	w, err := s.readwhile(func(char, _, _ byte, s string) (bool, error) {
+		return isLetter(char) || (isDigit(char) && len(s) > 0), nil
 	})
 
 	return TokenWord{
