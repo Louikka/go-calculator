@@ -7,37 +7,6 @@ import (
 	"slices"
 )
 
-// Reads first encountered parentheses in expression. If no parentheses
-// present, returns empty slice.
-func readParentheses(expr []scanner.Token) []scanner.Token {
-	depth := 0
-	outExpr := []scanner.Token{}
-
-	for _, t := range expr {
-		tPunc, ok := t.(scanner.TokenPunctuation)
-		if ok {
-			if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
-				depth++
-				if depth == 1 {
-					continue
-				}
-			} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN && depth > 0 {
-				depth--
-				if depth == 0 {
-					break
-				}
-			}
-		}
-
-		if depth > 0 {
-			outExpr = append(outExpr, t)
-			continue
-		}
-	}
-
-	return outExpr
-}
-
 func parseRange(expr []scanner.Token) (NodeRange, error) {
 	node := NodeRange{}
 
@@ -163,22 +132,34 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 	}, nil
 }
 
-type FunctionType int
+func isIRangeFunctionArg(arg []scanner.Token) bool {
+	if len(arg) >= 3 {
+		_, ok := arg[0].(scanner.TokenWord)
+		if !ok {
+			return false
+		}
 
-const (
-	// Function F(X) where F - name of the function, X - expression.
-	FUNCTYPE_DEFAULT FunctionType = iota
-	// Function F(I=N..M, X) where F - name of the function, I - name of
-	// the variable, N - range start (inc.), M - range end (inc.), X -
-	// expression (where the use of variable I are permitted).
-	FUNCTYPE_IRANGE
-)
+		argAss, ok := arg[1].(scanner.TokenOperator)
+		if !ok || argAss.Value != lexemes.OPERATOR_ASS {
+			return false
+		}
 
-func parseIRangeFunctionMainArg(arg []scanner.Token) (NodeIRangeFuncMainArg, error) {
+		_, err := parseRange(arg[2:])
+		if err != nil {
+			return false
+		}
+
+		return true
+	}
+
+	return false
+}
+
+func parseIRangeFunctionArg(arg []scanner.Token) (NodeIRangeFuncMainArg, error) {
 	node := NodeIRangeFuncMainArg{}
 
-	if len(arg) < 5 {
-		return node, fmt.Errorf("not enough tokens in main argument of IRANGE function")
+	if len(arg) < 3 {
+		return node, fmt.Errorf("not enough tokens in IRANGE function argument")
 	}
 
 	// variable
@@ -214,7 +195,7 @@ func parseIRangeFunctionMainArg(arg []scanner.Token) (NodeIRangeFuncMainArg, err
 	return node, nil
 }
 
-func parseFunctionArgs(tl []scanner.Token, funcType FunctionType) ([]Node, error) {
+func parseFunctionArgs(tl []scanner.Token) ([]Node, error) {
 	args := []Node{}
 
 	sliced, err := SliceTokenListByComma(tl)
@@ -222,44 +203,22 @@ func parseFunctionArgs(tl []scanner.Token, funcType FunctionType) ([]Node, error
 		return args, err
 	}
 
-	switch funcType {
-	case FUNCTYPE_DEFAULT:
-		for _, expr := range sliced {
-			parsedExpr, err := parseExpression(ParenthesiseExpression(expr))
+	for _, arg := range sliced {
+		var parsedArg Node
+
+		if isIRangeFunctionArg(arg) {
+			parsedArg, err = parseIRangeFunctionArg(arg)
 			if err != nil {
 				return args, err
 			}
-
-			args = append(args, parsedExpr)
+		} else {
+			parsedArg, err = parseExpression(ParenthesiseExpression(arg))
+			if err != nil {
+				return args, err
+			}
 		}
 
-	case FUNCTYPE_IRANGE:
-		{
-			argsLen := len(sliced)
-			if argsLen != 2 {
-				return args, fmt.Errorf("expected 2 arguments, but got %d", argsLen)
-			}
-
-			mainArgExpr := sliced[0]
-			secondaryArgExpr := sliced[1]
-
-			mainArg, err := parseIRangeFunctionMainArg(mainArgExpr)
-			if err != nil {
-				return args, err
-			}
-
-			args = append(args, mainArg)
-
-			secondaryArg, err := parseExpression(ParenthesiseExpression(secondaryArgExpr))
-			if err != nil {
-				return args, err
-			}
-
-			args = append(args, secondaryArg)
-		}
-
-	default:
-		return args, fmt.Errorf("undefined funcType %d", funcType)
+		args = append(args, parsedArg)
 	}
 
 	return args, nil
@@ -278,7 +237,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 			if isBinary(expr) {
 				return parseBinary(expr)
 			} else {
-				return parseExpression(readParentheses(expr))
+				return parseExpression(ReadParentheses(expr))
 			}
 		}
 
@@ -294,17 +253,9 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 				{
 					// if it is a function
 					if followUpToken.Value == lexemes.PUNCTUATION_LPAREN {
-						funcName := firstToken.Value
-						funcType := FUNCTYPE_DEFAULT
-
-						if lexemes.IsIRangeFunction(funcName) {
-							funcType = FUNCTYPE_IRANGE
-						}
-
-						args, err := parseFunctionArgs(readParentheses(expr), funcType)
-
+						args, err := parseFunctionArgs(ReadParentheses(expr))
 						return NodeFuncCall{
-							Name:      funcName,
+							Name:      firstToken.Value,
 							Arguments: args,
 						}, err
 					}

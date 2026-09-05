@@ -17,7 +17,10 @@ const (
 
 // functions
 
-var DEFINED_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT", "SUM"}
+var DEFINED_DEFAULT_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT"}
+var DEFINED_IRANGE_FUNCTIONS = []string{"SUM", "PROD"}
+
+var DEFINED_FUNCTIONS []string = append(DEFINED_DEFAULT_FUNCTIONS, DEFINED_IRANGE_FUNCTIONS...)
 
 const (
 	FUNCTION_SIN  = "SIN"
@@ -30,11 +33,11 @@ const (
 	FUNCTION_LN   = "LN"
 	FUNCTION_SQRT = "SQRT"
 	FUNCTION_SUM  = "SUM"
+	FUNCTION_PROD = "PROD"
 )
 
 func IsIRangeFunction(funcName string) bool {
-	IRangeFuncs := []string{FUNCTION_SUM}
-	return slices.Contains(IRangeFuncs, funcName)
+	return slices.Contains(DEFINED_IRANGE_FUNCTIONS, funcName)
 }
 
 // operators

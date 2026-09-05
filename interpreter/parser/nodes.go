@@ -76,6 +76,13 @@ func (n NodeFuncCall) Type() string {
 	return "FUNCTION_CALL"
 }
 
+// Returns arguments count.
+//
+//	len(node.Arguments)
+func (n NodeFuncCall) Argc() int {
+	return len(n.Arguments)
+}
+
 // IRANGE function main argument
 
 type NodeIRangeFuncMainArg struct {

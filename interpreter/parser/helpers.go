@@ -131,6 +131,38 @@ func ParenthesiseExpression(input []scanner.Token) []scanner.Token {
 	return output
 }
 
+// Reads first encountered parentheses in expression. If no parentheses
+// present, returns empty slice.
+func ReadParentheses(expr []scanner.Token) []scanner.Token {
+	outExpr := []scanner.Token{}
+
+	depth := 0
+
+	for _, t := range expr {
+		tPunc, ok := t.(scanner.TokenPunctuation)
+		if ok {
+			if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+				depth++
+				if depth == 1 {
+					continue
+				}
+			} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN && depth > 0 {
+				depth--
+				if depth == 0 {
+					break
+				}
+			}
+		}
+
+		if depth > 0 {
+			outExpr = append(outExpr, t)
+			continue
+		}
+	}
+
+	return outExpr
+}
+
 // Divides list of tokens by top-level commas.
 func SliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
 	groups := [][]scanner.Token{}
