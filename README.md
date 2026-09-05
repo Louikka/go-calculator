@@ -21,7 +21,8 @@ In addition, various functions and constants are also availible.
     - `LOG(x)` — decimal logarithm.
     - `LN(x)` — natural logarithm.
     - `SQRT(x)` — square root function.
-    - `SUM(i=LOW..HIGH, x)` — summation function, where `LOW` is the lower limit of the range, `HIGH` is the upper limit of the range (both are inclusive).
+    - `SUM(i=START..END, x)` — summation function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
+    - `PROD(i=START..END, x)` — product (multiplication) function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
 
 
 The program also supports flags.
