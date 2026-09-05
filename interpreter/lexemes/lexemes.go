@@ -7,12 +7,13 @@ import (
 
 // constants
 
-var DEFINED_CONSTANTS = []string{"PI", "E", "PHI"}
+var DEFINED_CONSTANTS = []string{"PI", "E", "PHI", "PSI"}
 
 const (
 	CONSTANT_PI  = "PI"
 	CONSTANT_E   = "E"
 	CONSTANT_PHI = "PHI"
+	CONSTANT_PSI = "PSI"
 )
 
 // functions

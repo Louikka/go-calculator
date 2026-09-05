@@ -11,6 +11,7 @@ In addition, various functions and constants are also availible.
     - `PI` — the number ***π***, approximately equal to 3.14159.
     - `E` — the number ***e*** (Euler's number), approximately equal to 2.71828.
     - `PHI` — the number ***φ*** (golden ratio), approximately equal to 1.61803.
+    - `PSI` — the number ***ψ*** (supergolden ratio), approximately equal to 1.46557.
 - Functions
     - `SIN(x)` — sine function, argument should be expressed in radian measure.
     - `COS(x)` — cosine function, argument should be expressed in radian measure.

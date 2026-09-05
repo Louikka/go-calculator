@@ -8,44 +8,33 @@ import (
 	"math"
 )
 
+var psi float64 = (1 + math.Cbrt(29+3*math.Sqrt(93)) + math.Cbrt(29-3*math.Sqrt(93))/2.0) / 3.0
+
+func solveNodeConstant(node parser.NodeConstant) (float64, error) {
+	switch node.Name {
+	case lexemes.CONSTANT_PI:
+		return math.Pi, nil
+
+	case lexemes.CONSTANT_E:
+		return math.E, nil
+
+	case lexemes.CONSTANT_PHI:
+		return math.Phi, nil
+
+	case lexemes.CONSTANT_PSI:
+		return 1.46557123187676802665, nil
+
+	default:
+		return 0, fmt.Errorf("undefined constant \"%s\"", node.Name)
+	}
+}
+
 type _VariableContext struct {
 	Name  string
 	Value float64
 }
 
-func solveBinary(node parser.NodeBinary, varCtx []_VariableContext) (float64, error) {
-	left, err := solveNode(node.Left, varCtx)
-	if err != nil {
-		return 0, err
-	}
-
-	right, err := solveNode(node.Right, varCtx)
-	if err != nil {
-		return 0, err
-	}
-
-	switch node.Operator {
-	case lexemes.OPERATOR_ADD:
-		return left + right, nil
-
-	case lexemes.OPERATOR_SUB:
-		return left - right, nil
-
-	case lexemes.OPERATOR_MUL:
-		return left * right, nil
-
-	case lexemes.OPERATOR_DIV:
-		return left / right, nil
-
-	case lexemes.OPERATOR_POW:
-		return math.Pow(left, right), nil
-
-	default:
-		return 0, fmt.Errorf("undefined operator \"%s\"", node.Operator)
-	}
-}
-
-func solveDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
+func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 	funcName := node.Name
 	funcArgc := node.Argc()
 	funcArgs := []float64{}
@@ -146,7 +135,7 @@ func solveDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 	}
 }
 
-func solveIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
+func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 	funcName := node.Name
 	funcArgc := node.Argc()
 
@@ -207,12 +196,44 @@ func solveIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 	}
 }
 
-func solveFuncCall(node parser.NodeFuncCall) (float64, error) {
+func solveNodeFuncCall(node parser.NodeFuncCall) (float64, error) {
 	if lexemes.IsIRangeFunction(node.Name) {
-		return solveIRangeFuncCall(node)
+		return solveNodeIRangeFuncCall(node)
 	}
 
-	return solveDefaultFuncCall(node)
+	return solveNodeDefaultFuncCall(node)
+}
+
+func solveNodeBinary(node parser.NodeBinary, varCtx []_VariableContext) (float64, error) {
+	left, err := solveNode(node.Left, varCtx)
+	if err != nil {
+		return 0, err
+	}
+
+	right, err := solveNode(node.Right, varCtx)
+	if err != nil {
+		return 0, err
+	}
+
+	switch node.Operator {
+	case lexemes.OPERATOR_ADD:
+		return left + right, nil
+
+	case lexemes.OPERATOR_SUB:
+		return left - right, nil
+
+	case lexemes.OPERATOR_MUL:
+		return left * right, nil
+
+	case lexemes.OPERATOR_DIV:
+		return left / right, nil
+
+	case lexemes.OPERATOR_POW:
+		return math.Pow(left, right), nil
+
+	default:
+		return 0, fmt.Errorf("undefined operator \"%s\"", node.Operator)
+	}
 }
 
 func solveNode(node parser.Node, varCtx []_VariableContext) (float64, error) {
@@ -233,29 +254,13 @@ func solveNode(node parser.Node, varCtx []_VariableContext) (float64, error) {
 		}
 
 	case parser.NodeConstant:
-		{
-			constName := typedNode.Name
-
-			switch constName {
-			case lexemes.CONSTANT_PI:
-				return math.Pi, nil
-
-			case lexemes.CONSTANT_E:
-				return math.E, nil
-
-			case lexemes.CONSTANT_PHI:
-				return math.Phi, nil
-
-			default:
-				return 0, fmt.Errorf("undefined constant \"%s\"", constName)
-			}
-		}
+		return solveNodeConstant(typedNode)
 
 	case parser.NodeFuncCall:
-		return solveFuncCall(typedNode)
+		return solveNodeFuncCall(typedNode)
 
 	case parser.NodeBinary:
-		return solveBinary(typedNode, varCtx)
+		return solveNodeBinary(typedNode, varCtx)
 
 	default:
 		return 0, fmt.Errorf("undefined node type \"%s\"", node.Type())
