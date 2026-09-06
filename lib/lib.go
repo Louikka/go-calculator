@@ -1,5 +1,7 @@
 package lib
 
+import "strconv"
+
 func LongestStringLenInSlice(slice []string) int {
 	maxLen := 0
 
@@ -11,4 +13,8 @@ func LongestStringLenInSlice(slice []string) int {
 	}
 
 	return maxLen
+}
+
+func F64ToString(n float64) string {
+	return strconv.FormatFloat(n, 'f', -1, 64)
 }
