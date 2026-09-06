@@ -1,14 +1,10 @@
 package interpreter
 
 import (
+	"gocalc/lib"
 	"math"
-	"strconv"
 	"testing"
 )
-
-func toString(n float64) string {
-	return strconv.FormatFloat(n, 'f', -1, 64)
-}
 
 func TestEvaluateString(t *testing.T) {
 	tests := []struct {
@@ -29,7 +25,7 @@ func TestEvaluateString(t *testing.T) {
 		},
 		{
 			input:    "1 * 2 / 3 * 4",
-			expected: toString(1.0 * 2.0 / 3.0 * 4.0),
+			expected: lib.F64ToString(1.0 * 2.0 / 3.0 * 4.0),
 		},
 		{
 			input:    "1.2 + 3.4",
@@ -61,7 +57,7 @@ func TestEvaluateString(t *testing.T) {
 		},
 		{
 			input:    "PI * 3",
-			expected: toString(math.Pi * 3),
+			expected: lib.F64ToString(math.Pi * 3),
 		},
 		{
 			input:    "ABS(-12.5)",
@@ -119,6 +115,14 @@ func TestEvaluateString(t *testing.T) {
 			input:    "SUM(I=1..10, I * 2)",
 			expected: "110",
 		},
+		{
+			input:    "PROD(I=1..5, I)",
+			expected: "120",
+		},
+		{
+			input:    "cbrt(125)",
+			expected: "5",
+		},
 	}
 
 	for i, test := range tests {
@@ -127,7 +131,7 @@ func TestEvaluateString(t *testing.T) {
 			t.Errorf("(case no.%d) error => %s", i, err)
 		}
 
-		toStr := toString(res)
+		toStr := lib.F64ToString(res)
 		if toStr != test.expected {
 			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, toStr)
 		}
