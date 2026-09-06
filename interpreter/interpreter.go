@@ -8,7 +8,10 @@ import (
 	"math"
 )
 
-var psi float64 = (1 + math.Cbrt(29+3*math.Sqrt(93)) + math.Cbrt(29-3*math.Sqrt(93))/2.0) / 3.0
+const (
+	psi = 1.46557123187676802665 // https://oeis.org/A092526
+	//    1.465571231876768026656731
+)
 
 func solveNodeConstant(node parser.NodeConstant) (float64, error) {
 	switch node.Name {
@@ -22,7 +25,7 @@ func solveNodeConstant(node parser.NodeConstant) (float64, error) {
 		return math.Phi, nil
 
 	case lexemes.CONSTANT_PSI:
-		return 1.46557123187676802665, nil
+		return psi, nil
 
 	default:
 		return 0, fmt.Errorf("undefined constant \"%s\"", node.Name)
@@ -128,6 +131,15 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			}
 
 			return math.Sqrt(funcArgs[0]), nil
+		}
+
+	case lexemes.FUNCTION_CBRT:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
+			}
+
+			return math.Cbrt(funcArgs[0]), nil
 		}
 
 	default:

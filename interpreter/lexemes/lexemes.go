@@ -18,7 +18,7 @@ const (
 
 // functions
 
-var DEFINED_DEFAULT_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT"}
+var DEFINED_DEFAULT_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT", "CBRT"}
 var DEFINED_IRANGE_FUNCTIONS = []string{"SUM", "PROD"}
 
 var DEFINED_FUNCTIONS []string = append(DEFINED_DEFAULT_FUNCTIONS, DEFINED_IRANGE_FUNCTIONS...)
@@ -33,6 +33,7 @@ const (
 	FUNCTION_LOG  = "LOG"
 	FUNCTION_LN   = "LN"
 	FUNCTION_SQRT = "SQRT"
+	FUNCTION_CBRT = "CBRT"
 	FUNCTION_SUM  = "SUM"
 	FUNCTION_PROD = "PROD"
 )
