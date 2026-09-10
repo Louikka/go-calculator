@@ -198,7 +198,7 @@ func parseIRangeFunctionArg(arg []scanner.Token) (NodeIRangeFuncMainArg, error) 
 func parseFunctionArgs(tl []scanner.Token) ([]Node, error) {
 	args := []Node{}
 
-	sliced, err := SliceTokenListByComma(tl)
+	sliced, err := sliceTokenListByComma(tl)
 	if err != nil {
 		return args, err
 	}
@@ -212,7 +212,7 @@ func parseFunctionArgs(tl []scanner.Token) ([]Node, error) {
 				return args, err
 			}
 		} else {
-			parsedArg, err = parseExpression(ParenthesiseExpression(arg))
+			parsedArg, err = parseExpression(parenthesiseExpression(arg))
 			if err != nil {
 				return args, err
 			}
@@ -237,7 +237,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 			if isBinary(expr) {
 				return parseBinary(expr)
 			} else {
-				return parseExpression(ReadParentheses(expr))
+				return parseExpression(readParentheses(expr))
 			}
 		}
 
@@ -253,7 +253,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 				{
 					// if it is a function
 					if followUpToken.Value == lexemes.PUNCTUATION_LPAREN {
-						args, err := parseFunctionArgs(ReadParentheses(expr))
+						args, err := parseFunctionArgs(readParentheses(expr))
 						return NodeFuncCall{
 							Name:      firstToken.Value,
 							Arguments: args,
@@ -282,8 +282,8 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 }
 
 func Parse(tl []scanner.Token) (NodeRoot, error) {
-	normalised := UnUnaryExpression(tl)
-	v, err := parseExpression(ParenthesiseExpression(normalised))
+	normalised := normalise(tl)
+	v, err := parseExpression(parenthesiseExpression(normalised))
 
 	return NodeRoot{
 		Value: v,

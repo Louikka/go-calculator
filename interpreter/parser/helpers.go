@@ -11,7 +11,7 @@ func canBeUnaryOper(t scanner.TokenOperator) bool {
 }
 
 // Converts unary operations to binary (e.g. "-1" to "0 - 1").
-func UnUnaryExpression(expr []scanner.Token) []scanner.Token {
+func unUnaryExpression(expr []scanner.Token) []scanner.Token {
 	out := []scanner.Token{}
 
 	for i, t := range expr {
@@ -39,9 +39,13 @@ func UnUnaryExpression(expr []scanner.Token) []scanner.Token {
 	return out
 }
 
+func normalise(tl []scanner.Token) []scanner.Token {
+	return unUnaryExpression(tl)
+}
+
 // Parentheses an expression (excluding function calls) -
 // https://en.wikipedia.org/wiki/Operator-precedence_parser#Full_parenthesization
-func ParenthesiseExpression(input []scanner.Token) []scanner.Token {
+func parenthesiseExpression(input []scanner.Token) []scanner.Token {
 
 	tLParen := scanner.NewTokenPunctuation(lexemes.PUNCTUATION_LPAREN)
 	tRParen := scanner.NewTokenPunctuation(lexemes.PUNCTUATION_RPAREN)
@@ -133,7 +137,7 @@ func ParenthesiseExpression(input []scanner.Token) []scanner.Token {
 
 // Reads first encountered parentheses in expression. If no parentheses
 // present, returns empty slice.
-func ReadParentheses(expr []scanner.Token) []scanner.Token {
+func readParentheses(expr []scanner.Token) []scanner.Token {
 	outExpr := []scanner.Token{}
 
 	depth := 0
@@ -164,7 +168,7 @@ func ReadParentheses(expr []scanner.Token) []scanner.Token {
 }
 
 // Divides list of tokens by top-level commas.
-func SliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
+func sliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
 	groups := [][]scanner.Token{}
 
 	depth := 0

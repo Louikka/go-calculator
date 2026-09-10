@@ -55,7 +55,7 @@ func TestUnUnaryExpression(t *testing.T) {
 			t.Errorf("(case no.%d) => Scan error : %s", i, err)
 		}
 
-		ununared := UnUnaryExpression(tl)
+		ununared := unUnaryExpression(tl)
 		ununaredStr := scanner.StringifyTokens(ununared)
 
 		if ununaredStr != test.expected {
@@ -125,7 +125,7 @@ func TestParenthesiseExpression(t *testing.T) {
 			t.Errorf("(case no.%d) => Scan error : %s", i, err)
 		}
 
-		parenthesised := ParenthesiseExpression(tl)
+		parenthesised := parenthesiseExpression(tl)
 		parenthesisedStringified := scanner.StringifyTokens(parenthesised)
 
 		if parenthesisedStringified != test.expected {
@@ -167,7 +167,7 @@ func TestSliceTokenListByComma(t *testing.T) {
 			t.Errorf("(case no.%d) => Scan error : %s", i, err)
 		}
 
-		sliced, err := SliceTokenListByComma(tl)
+		sliced, err := sliceTokenListByComma(tl)
 		if err != nil {
 			t.Errorf("(case no.%d) error => %s", i, err)
 		}
