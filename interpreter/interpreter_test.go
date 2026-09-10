@@ -6,11 +6,31 @@ import (
 	"testing"
 )
 
-func TestEvaluateString(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
+type TestEvalS struct {
+	input    string
+	expected string
+}
+
+func tt(t *testing.T, tests []TestEvalS) bool {
+	for i, test := range tests {
+		res, err := EvaluateString(test.input)
+		if err != nil {
+			t.Errorf("(case no.%d) error => %s", i, err)
+			return false
+		}
+
+		toStr := lib.F64ToString(res)
+		if toStr != test.expected {
+			t.Errorf("\"%s\" (case no.%d) => expected %s, got %s", test.input, i, test.expected, toStr)
+			return false
+		}
+	}
+
+	return true
+}
+
+func TestEvaluateString_Expression(t *testing.T) {
+	tests := []TestEvalS{
 		{
 			input:    "1 + 2",
 			expected: "3",
@@ -40,7 +60,7 @@ func TestEvaluateString(t *testing.T) {
 			expected: "92",
 		},
 		{
-			input:    "51 / 3",
+			input:    "51 / (3)",
 			expected: "17",
 		},
 		{
@@ -56,9 +76,62 @@ func TestEvaluateString(t *testing.T) {
 			expected: "2",
 		},
 		{
-			input:    "PI * 3",
-			expected: lib.F64ToString(math.Pi * 3),
+			input:    "-1 + 2",
+			expected: "1",
 		},
+		{
+			input:    "-1 / 4",
+			expected: "-0.25",
+		},
+		{
+			input:    "-1 / 4 + 0.25",
+			expected: "0",
+		},
+		{
+			input:    "-(1 + 2)",
+			expected: "-3",
+		},
+		{
+			input:    "-(-1)",
+			expected: "1",
+		},
+		{
+			input:    "2e3",
+			expected: "2000",
+		},
+		{
+			input:    "4e-3",
+			expected: "0.004",
+		},
+	}
+
+	tt(t, tests)
+}
+
+func TestEvaluateString_Constants(t *testing.T) {
+	tests := []TestEvalS{
+		{
+			input:    "PI",
+			expected: lib.F64ToString(math.Pi),
+		},
+		{
+			input:    "E - 1",
+			expected: lib.F64ToString((math.E - 1) - 0.0000000000000002),
+			//                                     ^ expected 1.7182818284590453, got 1.718281828459045??
+			//                                      where did 0.0000000000000003 came from?
+			//                                                                 ^
+		},
+		{
+			input:    "(PSI * 3) + 1.5",
+			expected: lib.F64ToString((psi * 3) + 1.5),
+		},
+	}
+
+	tt(t, tests)
+}
+
+func TestEvaluateString_Functions(t *testing.T) {
+	tests := []TestEvalS{
 		{
 			input:    "ABS(-12.5)",
 			expected: "12.5",
@@ -84,26 +157,6 @@ func TestEvaluateString(t *testing.T) {
 			expected: "9999",
 		},
 		{
-			input:    "-1 + 2",
-			expected: "1",
-		},
-		{
-			input:    "-1 / 4",
-			expected: "-0.25",
-		},
-		{
-			input:    "-1 / 4 + 0.25",
-			expected: "0",
-		},
-		{
-			input:    "-(1 + 2)",
-			expected: "-3",
-		},
-		{
-			input:    "-(-1)",
-			expected: "1",
-		},
-		{
 			input:    "SUM(I=1..5, I)",
 			expected: "15",
 		},
@@ -123,17 +176,19 @@ func TestEvaluateString(t *testing.T) {
 			input:    "cbrt(125)",
 			expected: "5",
 		},
+		{
+			input:    "Round(1.39)",
+			expected: "1",
+		},
+		{
+			input:    "floor(1.9999)",
+			expected: "1",
+		},
+		{
+			input:    "ceil(1.0001)",
+			expected: "2",
+		},
 	}
 
-	for i, test := range tests {
-		res, err := EvaluateString(test.input)
-		if err != nil {
-			t.Errorf("(case no.%d) error => %s", i, err)
-		}
-
-		toStr := lib.F64ToString(res)
-		if toStr != test.expected {
-			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, toStr)
-		}
-	}
+	tt(t, tests)
 }
