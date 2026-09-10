@@ -2,6 +2,7 @@ package lib
 
 import "strconv"
 
+// Returns length of the longest string in the slice of strings.
 func LongestStringLenInSlice(slice []string) int {
 	maxLen := 0
 
