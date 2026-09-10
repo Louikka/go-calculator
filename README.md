@@ -23,14 +23,15 @@ In addition, various functions and constants are also availible.
     - `LN(x)` — natural logarithm.
     - `SQRT(x)` — square root function.
     - `CBRT(x)` — cubic root function.
+    - `ROUND(x)` — rounds to the nearest integer.
+    - `FLOOR(x)` — rounds to the greatest integer less than or equal to x.
+    - `CEIL(x)` — rounds to the least integer greater than or equal to x.
     - `SUM(i=START..END, x)` — summation function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
     - `PROD(i=START..END, x)` — product (multiplication) function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
 
 
 The program also supports flags.
 - `-r` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
-- `-ast` instead of calculating, outputs generated AST of the expression into a file (`out.txt` by default).
-- `-o <FILE>` specifies output file.
 
 ## ToDo
 

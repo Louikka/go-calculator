@@ -16,26 +16,41 @@ const (
 	CONSTANT_PSI = "PSI"
 )
 
+// This function checks if constant constName is in DEFINED_CONSTANTS.
+func IsConstant(constName string) bool {
+	return slices.Contains(DEFINED_CONSTANTS, constName)
+}
+
 // functions
 
-var DEFINED_DEFAULT_FUNCTIONS = []string{"SIN", "COS", "TAN", "ATAN", "EXP", "ABS", "LOG", "LN", "SQRT", "CBRT"}
+var DEFINED_DEFAULT_FUNCTIONS = []string{
+	"SIN", "COS", "TAN", "ATAN",
+	"EXP",
+	"ABS",
+	"LOG", "LN",
+	"SQRT", "CBRT",
+	"ROUND", "FLOOR", "CEIL",
+}
 var DEFINED_IRANGE_FUNCTIONS = []string{"SUM", "PROD"}
 
 var DEFINED_FUNCTIONS []string = append(DEFINED_DEFAULT_FUNCTIONS, DEFINED_IRANGE_FUNCTIONS...)
 
 const (
-	FUNCTION_SIN  = "SIN"
-	FUNCTION_COS  = "COS"
-	FUNCTION_TAN  = "TAN"
-	FUNCTION_ATAN = "ATAN"
-	FUNCTION_EXP  = "EXP"
-	FUNCTION_ABS  = "ABS"
-	FUNCTION_LOG  = "LOG"
-	FUNCTION_LN   = "LN"
-	FUNCTION_SQRT = "SQRT"
-	FUNCTION_CBRT = "CBRT"
-	FUNCTION_SUM  = "SUM"
-	FUNCTION_PROD = "PROD"
+	FUNCTION_SIN   = "SIN"
+	FUNCTION_COS   = "COS"
+	FUNCTION_TAN   = "TAN"
+	FUNCTION_ATAN  = "ATAN"
+	FUNCTION_EXP   = "EXP"
+	FUNCTION_ABS   = "ABS"
+	FUNCTION_LOG   = "LOG"
+	FUNCTION_LN    = "LN"
+	FUNCTION_SQRT  = "SQRT"
+	FUNCTION_CBRT  = "CBRT"
+	FUNCTION_ROUND = "ROUND"
+	FUNCTION_FLOOR = "FLOOR"
+	FUNCTION_CEIL  = "CEIL"
+	FUNCTION_SUM   = "SUM"
+	FUNCTION_PROD  = "PROD"
 )
 
 func IsIRangeFunction(funcName string) bool {

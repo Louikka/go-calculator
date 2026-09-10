@@ -1,13 +1,13 @@
 package parser
 
 import (
-	"gocalc/interpreter/lexemes"
+	l "gocalc/interpreter/lexemes"
 	"gocalc/interpreter/scanner"
 )
 
 // Checks if operator token can be unary.
 func canBeUnaryOper(t scanner.TokenOperator) bool {
-	return t.Value == lexemes.OPERATOR_ADD || t.Value == lexemes.OPERATOR_SUB
+	return t.Value == l.OPERATOR_ADD || t.Value == l.OPERATOR_SUB
 }
 
 // Converts unary operations to binary (e.g. "-1" to "0 - 1").
@@ -25,7 +25,7 @@ func unUnaryExpression(expr []scanner.Token) []scanner.Token {
 				} else /* i > 0 */ {
 					prevT := expr[i-1]
 					prevTPunc, ok := prevT.(scanner.TokenPunctuation)
-					if ok && prevTPunc.Value == lexemes.PUNCTUATION_LPAREN {
+					if ok && prevTPunc.Value == l.PUNCTUATION_LPAREN {
 						// first token after left parenthesis
 						out = append(out, scanner.NewTokenNumber(0))
 					}
@@ -47,8 +47,8 @@ func normalise(tl []scanner.Token) []scanner.Token {
 // https://en.wikipedia.org/wiki/Operator-precedence_parser#Full_parenthesization
 func parenthesiseExpression(input []scanner.Token) []scanner.Token {
 
-	tLParen := scanner.NewTokenPunctuation(lexemes.PUNCTUATION_LPAREN)
-	tRParen := scanner.NewTokenPunctuation(lexemes.PUNCTUATION_RPAREN)
+	tLParen := scanner.NewTokenPunctuation(l.PUNCTUATION_LPAREN)
+	tRParen := scanner.NewTokenPunctuation(l.PUNCTUATION_RPAREN)
 
 	output := []scanner.Token{}
 
@@ -62,19 +62,19 @@ func parenthesiseExpression(input []scanner.Token) []scanner.Token {
 		case scanner.TokenOperator:
 			if !isFunc {
 				switch tok.Value {
-				case lexemes.OPERATOR_POW:
+				case l.OPERATOR_POW:
 					output = append(output, tRParen, tok, tLParen)
 
-				case lexemes.OPERATOR_MUL:
+				case l.OPERATOR_MUL:
 					output = append(output, tRParen, tRParen, tok, tLParen, tLParen)
 
-				case lexemes.OPERATOR_DIV:
+				case l.OPERATOR_DIV:
 					output = append(output, tRParen, tRParen, tok, tLParen, tLParen)
 
-				case lexemes.OPERATOR_ADD:
+				case l.OPERATOR_ADD:
 					output = append(output, tRParen, tRParen, tRParen, tok, tLParen, tLParen, tLParen)
 
-				case lexemes.OPERATOR_SUB:
+				case l.OPERATOR_SUB:
 					output = append(output, tRParen, tRParen, tRParen, tok, tLParen, tLParen, tLParen)
 
 				default:
@@ -87,7 +87,7 @@ func parenthesiseExpression(input []scanner.Token) []scanner.Token {
 		case scanner.TokenPunctuation:
 			{
 				switch tok.Value {
-				case lexemes.PUNCTUATION_LPAREN:
+				case l.PUNCTUATION_LPAREN:
 					{
 						if isFunc {
 							funcDepth++
@@ -106,7 +106,7 @@ func parenthesiseExpression(input []scanner.Token) []scanner.Token {
 						output = append(output, tLParen, tLParen, tLParen, tLParen)
 					}
 
-				case lexemes.PUNCTUATION_RPAREN:
+				case l.PUNCTUATION_RPAREN:
 					{
 						if isFunc {
 							if funcDepth > 0 {
@@ -145,12 +145,12 @@ func readParentheses(expr []scanner.Token) []scanner.Token {
 	for _, t := range expr {
 		tPunc, ok := t.(scanner.TokenPunctuation)
 		if ok {
-			if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+			if tPunc.Value == l.PUNCTUATION_LPAREN {
 				depth++
 				if depth == 1 {
 					continue
 				}
-			} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN && depth > 0 {
+			} else if tPunc.Value == l.PUNCTUATION_RPAREN && depth > 0 {
 				depth--
 				if depth == 0 {
 					break
@@ -183,16 +183,16 @@ func sliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
 		tPunc, ok := t.(scanner.TokenPunctuation)
 		if ok {
 			switch tPunc.Value {
-			case lexemes.PUNCTUATION_COMMA:
+			case l.PUNCTUATION_COMMA:
 				if depth == 0 {
 					groups = append(groups, []scanner.Token{})
 					continue
 				}
 
-			case lexemes.PUNCTUATION_LPAREN:
+			case l.PUNCTUATION_LPAREN:
 				depth++
 
-			case lexemes.PUNCTUATION_RPAREN:
+			case l.PUNCTUATION_RPAREN:
 				if depth > 0 {
 					depth--
 				} else {

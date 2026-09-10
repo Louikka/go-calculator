@@ -2,9 +2,8 @@ package parser
 
 import (
 	"fmt"
-	"gocalc/interpreter/lexemes"
+	l "gocalc/interpreter/lexemes"
 	"gocalc/interpreter/scanner"
-	"slices"
 )
 
 func parseRange(expr []scanner.Token) (NodeRange, error) {
@@ -26,7 +25,7 @@ func parseRange(expr []scanner.Token) (NodeRange, error) {
 	// range operator
 
 	oper, ok := expr[1].(scanner.TokenOperator)
-	if !ok || oper.Value != lexemes.OPERATOR_RANGE {
+	if !ok || oper.Value != l.OPERATOR_RANGE {
 		return node, fmt.Errorf("expected a range operator")
 	}
 
@@ -54,9 +53,9 @@ func isBinary(expr []scanner.Token) bool {
 		} else {
 			tPunc, ok := t.(scanner.TokenPunctuation)
 			if ok {
-				if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+				if tPunc.Value == l.PUNCTUATION_LPAREN {
 					depth++
-				} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN && depth > 0 {
+				} else if tPunc.Value == l.PUNCTUATION_RPAREN && depth > 0 {
 					depth--
 				}
 			}
@@ -98,9 +97,9 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 
 			tPunc, ok := t.(scanner.TokenPunctuation)
 			if ok {
-				if tPunc.Value == lexemes.PUNCTUATION_LPAREN {
+				if tPunc.Value == l.PUNCTUATION_LPAREN {
 					depth++
-				} else if tPunc.Value == lexemes.PUNCTUATION_RPAREN {
+				} else if tPunc.Value == l.PUNCTUATION_RPAREN {
 					if depth > 0 {
 						depth--
 					} else {
@@ -140,7 +139,7 @@ func isIRangeFunctionArg(arg []scanner.Token) bool {
 		}
 
 		argAss, ok := arg[1].(scanner.TokenOperator)
-		if !ok || argAss.Value != lexemes.OPERATOR_ASS {
+		if !ok || argAss.Value != l.OPERATOR_ASS {
 			return false
 		}
 
@@ -168,7 +167,7 @@ func parseIRangeFunctionArg(arg []scanner.Token) (NodeIRangeFuncMainArg, error) 
 	if !ok {
 		return node, fmt.Errorf("expected a variable")
 	}
-	if slices.Contains(lexemes.DEFINED_CONSTANTS, argVar.Value) {
+	if l.IsConstant(argVar.Value) {
 		return node, ErrVarAsConst
 	}
 
@@ -179,7 +178,7 @@ func parseIRangeFunctionArg(arg []scanner.Token) (NodeIRangeFuncMainArg, error) 
 	// assign operator
 
 	argAss, ok := arg[1].(scanner.TokenOperator)
-	if !ok || argAss.Value != lexemes.OPERATOR_ASS {
+	if !ok || argAss.Value != l.OPERATOR_ASS {
 		return node, fmt.Errorf("expected an assign operator")
 	}
 
@@ -233,7 +232,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 
 	switch firstToken := expr[0].(type) {
 	case scanner.TokenPunctuation:
-		if firstToken.Value == lexemes.PUNCTUATION_LPAREN {
+		if firstToken.Value == l.PUNCTUATION_LPAREN {
 			if isBinary(expr) {
 				return parseBinary(expr)
 			} else {
@@ -252,7 +251,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 			case scanner.TokenPunctuation:
 				{
 					// if it is a function
-					if followUpToken.Value == lexemes.PUNCTUATION_LPAREN {
+					if followUpToken.Value == l.PUNCTUATION_LPAREN {
 						args, err := parseFunctionArgs(readParentheses(expr))
 						return NodeFuncCall{
 							Name:      firstToken.Value,
@@ -266,7 +265,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 			}
 
 		} else {
-			if slices.Contains(lexemes.DEFINED_CONSTANTS, firstToken.Value) {
+			if l.IsConstant(firstToken.Value) {
 				return NodeConstant{
 					Name: firstToken.Value,
 				}, nil

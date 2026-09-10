@@ -2,7 +2,7 @@ package interpreter
 
 import (
 	"fmt"
-	"gocalc/interpreter/lexemes"
+	l "gocalc/interpreter/lexemes"
 	"gocalc/interpreter/parser"
 	"gocalc/interpreter/scanner"
 	"math"
@@ -15,16 +15,16 @@ const (
 
 func solveNodeConstant(node parser.NodeConstant) (float64, error) {
 	switch node.Name {
-	case lexemes.CONSTANT_PI:
+	case l.CONSTANT_PI:
 		return math.Pi, nil
 
-	case lexemes.CONSTANT_E:
+	case l.CONSTANT_E:
 		return math.E, nil
 
-	case lexemes.CONSTANT_PHI:
+	case l.CONSTANT_PHI:
 		return math.Phi, nil
 
-	case lexemes.CONSTANT_PSI:
+	case l.CONSTANT_PSI:
 		return psi, nil
 
 	default:
@@ -52,7 +52,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 	}
 
 	switch funcName {
-	case lexemes.FUNCTION_SIN:
+	case l.FUNCTION_SIN:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -61,7 +61,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Sin(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_COS:
+	case l.FUNCTION_COS:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -70,7 +70,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Cos(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_TAN:
+	case l.FUNCTION_TAN:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -79,7 +79,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Tan(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_ATAN:
+	case l.FUNCTION_ATAN:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -88,7 +88,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Atan(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_EXP:
+	case l.FUNCTION_EXP:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -97,7 +97,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Exp(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_ABS:
+	case l.FUNCTION_ABS:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -106,7 +106,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Abs(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_LOG:
+	case l.FUNCTION_LOG:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -115,7 +115,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Log10(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_LN:
+	case l.FUNCTION_LN:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -124,7 +124,7 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Log(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_SQRT:
+	case l.FUNCTION_SQRT:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
@@ -133,13 +133,40 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Sqrt(funcArgs[0]), nil
 		}
 
-	case lexemes.FUNCTION_CBRT:
+	case l.FUNCTION_CBRT:
 		{
 			if funcArgc != 1 {
 				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
 			}
 
 			return math.Cbrt(funcArgs[0]), nil
+		}
+
+	case l.FUNCTION_ROUND:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
+			}
+
+			return math.Round(funcArgs[0]), nil
+		}
+
+	case l.FUNCTION_FLOOR:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
+			}
+
+			return math.Floor(funcArgs[0]), nil
+		}
+
+	case l.FUNCTION_CEIL:
+		{
+			if funcArgc != 1 {
+				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
+			}
+
+			return math.Ceil(funcArgs[0]), nil
 		}
 
 	default:
@@ -163,7 +190,7 @@ func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 	secondArg := node.Arguments[1]
 
 	switch funcName {
-	case lexemes.FUNCTION_SUM:
+	case l.FUNCTION_SUM:
 		{
 			var sum float64 = 0
 			for i := mainArg.Range.Start; i <= mainArg.Range.End; i++ {
@@ -183,7 +210,7 @@ func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return sum, nil
 		}
 
-	case lexemes.FUNCTION_PROD:
+	case l.FUNCTION_PROD:
 		{
 			var prod float64 = 1
 			for i := mainArg.Range.Start; i <= mainArg.Range.End; i++ {
@@ -209,7 +236,7 @@ func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 }
 
 func solveNodeFuncCall(node parser.NodeFuncCall) (float64, error) {
-	if lexemes.IsIRangeFunction(node.Name) {
+	if l.IsIRangeFunction(node.Name) {
 		return solveNodeIRangeFuncCall(node)
 	}
 
@@ -228,19 +255,19 @@ func solveNodeBinary(node parser.NodeBinary, varCtx []_VariableContext) (float64
 	}
 
 	switch node.Operator {
-	case lexemes.OPERATOR_ADD:
+	case l.OPERATOR_ADD:
 		return left + right, nil
 
-	case lexemes.OPERATOR_SUB:
+	case l.OPERATOR_SUB:
 		return left - right, nil
 
-	case lexemes.OPERATOR_MUL:
+	case l.OPERATOR_MUL:
 		return left * right, nil
 
-	case lexemes.OPERATOR_DIV:
+	case l.OPERATOR_DIV:
 		return left / right, nil
 
-	case lexemes.OPERATOR_POW:
+	case l.OPERATOR_POW:
 		return math.Pow(left, right), nil
 
 	default:
