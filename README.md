@@ -17,15 +17,12 @@ In addition, various functions and constants are also availible.
     - `COS(x)` — cosine function, argument should be expressed in radian measure.
     - `TAN(x)` — tangent function, argument should be expressed in radian measure.
     - `ATAN(x)` — arctangent (in radians) function.
-    - `EXP(x)` — natural exponential function, `EXP(x) = e^x`.
     - `ABS(x)` — absolute value function, `ABS(x) = |x|`.
     - `LOG(x)` — decimal logarithm.
     - `LN(x)` — natural logarithm.
     - `SQRT(x)` — square root function.
     - `CBRT(x)` — cubic root function.
     - `ROUND(x)` — rounds to the nearest integer.
-    - `FLOOR(x)` — rounds to the greatest integer less than or equal to x.
-    - `CEIL(x)` — rounds to the least integer greater than or equal to x.
     - `SUM(i=START..END, x)` — summation function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
     - `PROD(i=START..END, x)` — product (multiplication) function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
 

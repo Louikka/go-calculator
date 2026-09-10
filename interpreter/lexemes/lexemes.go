@@ -25,11 +25,10 @@ func IsConstant(constName string) bool {
 
 var DEFINED_DEFAULT_FUNCTIONS = []string{
 	"SIN", "COS", "TAN", "ATAN",
-	"EXP",
 	"ABS",
 	"LOG", "LN",
 	"SQRT", "CBRT",
-	"ROUND", "FLOOR", "CEIL",
+	"ROUND",
 }
 var DEFINED_IRANGE_FUNCTIONS = []string{"SUM", "PROD"}
 
@@ -40,15 +39,12 @@ const (
 	FUNCTION_COS   = "COS"
 	FUNCTION_TAN   = "TAN"
 	FUNCTION_ATAN  = "ATAN"
-	FUNCTION_EXP   = "EXP"
 	FUNCTION_ABS   = "ABS"
 	FUNCTION_LOG   = "LOG"
 	FUNCTION_LN    = "LN"
 	FUNCTION_SQRT  = "SQRT"
 	FUNCTION_CBRT  = "CBRT"
 	FUNCTION_ROUND = "ROUND"
-	FUNCTION_FLOOR = "FLOOR"
-	FUNCTION_CEIL  = "CEIL"
 	FUNCTION_SUM   = "SUM"
 	FUNCTION_PROD  = "PROD"
 )

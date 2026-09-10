@@ -180,14 +180,6 @@ func TestEvaluateString_Functions(t *testing.T) {
 			input:    "Round(1.39)",
 			expected: "1",
 		},
-		{
-			input:    "floor(1.9999)",
-			expected: "1",
-		},
-		{
-			input:    "ceil(1.0001)",
-			expected: "2",
-		},
 	}
 
 	tt(t, tests)

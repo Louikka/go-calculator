@@ -88,15 +88,6 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Atan(funcArgs[0]), nil
 		}
 
-	case l.FUNCTION_EXP:
-		{
-			if funcArgc != 1 {
-				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
-			}
-
-			return math.Exp(funcArgs[0]), nil
-		}
-
 	case l.FUNCTION_ABS:
 		{
 			if funcArgc != 1 {
@@ -149,24 +140,6 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			}
 
 			return math.Round(funcArgs[0]), nil
-		}
-
-	case l.FUNCTION_FLOOR:
-		{
-			if funcArgc != 1 {
-				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
-			}
-
-			return math.Floor(funcArgs[0]), nil
-		}
-
-	case l.FUNCTION_CEIL:
-		{
-			if funcArgc != 1 {
-				return 0, fmt.Errorf("%s expected 1 argument, but got %d", funcName, funcArgc)
-			}
-
-			return math.Ceil(funcArgs[0]), nil
 		}
 
 	default:
