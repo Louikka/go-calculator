@@ -2,10 +2,13 @@ package scanner
 
 import (
 	"fmt"
-	l "gocalc/interpreter/lexemes"
+	"gocalc/lexemes"
+	token "gocalc/tokens"
 	"strconv"
 	"strings"
 )
+
+//---------------------------------------------------------------------------//
 
 type Scanner struct {
 	s   string
@@ -50,7 +53,7 @@ func (s *Scanner) IsEmpty() bool {
 	return len(s.s) == 0
 }
 
-/* */
+//---------------------------------------------------------------------------//
 
 type _PredicateFunc func(char, before, after byte, s string) (bool, error)
 
@@ -85,11 +88,22 @@ func (s *Scanner) readwhile(predicate _PredicateFunc) (string, error) {
 	return str, nil
 }
 
-func (s *Scanner) readNumber() (TokenNumber, error) {
+// Skips whitespace characters.
+func (s *Scanner) skipwsp() error {
+	_, err := s.readwhile(func(char, _, _ byte, _ string) (bool, error) {
+		return isWhitespace(char), nil
+	})
+
+	return err
+}
+
+//---------------------------------------------------------------------------//
+
+func (s *Scanner) readNumber() (token.TokenNumber, error) {
 	isFloat := false
 	isScientific := false
 
-	n_s, err := s.readwhile(func(char, before, after byte, _ string) (bool, error) {
+	r, err := s.readwhile(func(char, before, after byte, _ string) (bool, error) {
 		if char == '.' {
 			if isFloat {
 				return false, nil
@@ -119,18 +133,16 @@ func (s *Scanner) readNumber() (TokenNumber, error) {
 		return isDigit(char), nil
 	})
 	if err != nil {
-		return TokenNumber{}, err
+		return token.TokenNumber{}, err
 	}
 
-	n_f, err := strconv.ParseFloat(n_s, 64)
+	n, err := strconv.ParseFloat(r, 64)
 
-	return TokenNumber{
-		Value: n_f,
-	}, err
+	return token.NewTokenNumber(n), err
 }
 
-func (s *Scanner) readWord() (TokenWord, error) {
-	t := TokenWord{}
+func (s *Scanner) readWord() (token.TokenWord, error) {
+	t := token.TokenWord{}
 
 	w, err := s.readwhile(func(char, _, _ byte, s string) (bool, error) {
 		return isLetter(char) || (isDigit(char) && len(s) > 0), nil
@@ -140,72 +152,61 @@ func (s *Scanner) readWord() (TokenWord, error) {
 	}
 
 	t.Value = w
-	t.Kind = WORD_KIND_VARIABLE
 
-	if _, isConst := l.IsConstant(w); isConst {
-		t.Kind = WORD_KIND_CONSTANT
-	}
-
-	_, err = s.readwhile(func(char, _, _ byte, _ string) (bool, error) {
-		return isWhitespace(char), nil
-	})
+	err = s.skipwsp()
 	if err != nil {
 		return t, err
 	}
 
 	if !s.isEnd() && isLeftParenthesis(s.peek(0)) {
-		t.Kind = WORD_KIND_FUNCTION
+		t.Kind = token.WORD_KIND_FUNCTION
 	}
 
 	return t, err
 }
 
-func (s *Scanner) readOperator() (TokenOperator, error) {
+func (s *Scanner) readOperator() (token.TokenOperator, error) {
 	o, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > l.LONGEST_OPERATOR_LEN {
+		if len(str) > lexemes.LONGEST_OPERATOR_LEN {
 			return false, ErrTokenTooLong
 		}
 
-		if _, isOper := l.IsOperator(str); isOper {
+		if _, isOper := lexemes.IsOperator(str); isOper {
 			return false, nil
 		}
 
 		return true, nil
 	})
 
-	return TokenOperator{
-		Value: o,
-	}, err
+	return token.NewTokenOperator(o), err
 }
 
-func (s *Scanner) readPunctuation() (TokenPunctuation, error) {
+func (s *Scanner) readPunctuation() (token.TokenPunctuation, error) {
 	p, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > l.LONGEST_PUCTUATION_LEN {
+		if len(str) > lexemes.LONGEST_PUCTUATION_LEN {
 			return false, ErrTokenTooLong
 		}
 
-		if _, isPunc := l.IsPunctuation(str); isPunc {
+		if _, isPunc := lexemes.IsPunctuation(str); isPunc {
 			return false, nil
 		}
 
 		return true, nil
 	})
 
-	return TokenPunctuation{
+	return token.TokenPunctuation{
 		Value: p,
 	}, err
 }
 
-func (s *Scanner) scanNextToken() (Token, error) {
-	_, err := s.readwhile(func(char, _, _ byte, _ string) (bool, error) {
-		return isWhitespace(char), nil
-	})
+func (s *Scanner) scanNextToken() (token.Token, error) {
+	err := s.skipwsp()
 	if err != nil {
-		return InvalidToken{}, err
+		return token.TokenInvalid{}, err
 	}
 
 	if s.isEnd() {
-		return InvalidToken{}, ErrEndOfInput
+		return token.TokenInvalid{}, ErrEndOfInput
 	}
 
 	char := s.peek(0)
@@ -226,15 +227,17 @@ func (s *Scanner) scanNextToken() (Token, error) {
 		return s.readPunctuation()
 	}
 
-	return InvalidToken{}, fmt.Errorf("undefined character \"%c\"", char)
+	return token.TokenInvalid{}, fmt.Errorf("undefined character \"%c\"", char)
 }
 
-func Scan(s string) ([]Token, error) {
-	output := []Token{}
+//---------------------------------------------------------------------------//
+
+func Scan(s string) ([]token.Token, error) {
+	output := []token.Token{}
 
 	scanner := NewScanner(s)
 	if scanner.IsEmpty() {
-		return []Token{}, nil
+		return []token.Token{}, nil
 	}
 
 	for !scanner.isEnd() {

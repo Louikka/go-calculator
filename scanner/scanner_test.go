@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	token "gocalc/tokens"
 	"testing"
 )
 
@@ -244,32 +245,28 @@ func TestScanner_ReadWord(t *testing.T) {
 		{
 			s:        "PI",
 			expected: "PI",
-			kind:     WORD_KIND_CONSTANT,
 		},
 		{
 			s:        "e",
 			expected: "E",
-			kind:     WORD_KIND_CONSTANT,
 		},
 		{
 			s:        "SQRT()",
 			expected: "SQRT",
-			kind:     WORD_KIND_FUNCTION,
+			kind:     token.WORD_KIND_FUNCTION,
 		},
 		{
 			s:        "ATAN ( )",
 			expected: "ATAN",
-			kind:     WORD_KIND_FUNCTION,
+			kind:     token.WORD_KIND_FUNCTION,
 		},
 		{
 			s:        "a1",
 			expected: "A1",
-			kind:     WORD_KIND_VARIABLE,
 		},
 		{
 			s:        "ABC123 * 4.5",
 			expected: "ABC123",
-			kind:     WORD_KIND_VARIABLE,
 		},
 	}
 

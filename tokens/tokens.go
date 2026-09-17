@@ -1,10 +1,9 @@
-package scanner
+package token
 
 import (
-	"gocalc/interpreter/lexemes"
+	"gocalc/lexemes"
 	"math"
 	"strconv"
-	"strings"
 )
 
 type Token interface {
@@ -14,21 +13,21 @@ type Token interface {
 	ToString() string
 }
 
-// invalid
+// Invalid token //----------------------------------------------------------//
 
-type InvalidToken struct {
+type TokenInvalid struct {
 	//
 }
 
-func (t InvalidToken) Type() string {
+func (t TokenInvalid) Type() string {
 	return "INVALID"
 }
 
-func (t InvalidToken) ToString() string {
+func (t TokenInvalid) ToString() string {
 	return ""
 }
 
-// number
+// Number token //-----------------------------------------------------------//
 
 type TokenNumber struct {
 	Value float64
@@ -52,13 +51,13 @@ func (t TokenNumber) IsInt() bool {
 	return t.Value == math.Trunc(t.Value)
 }
 
-// word
+// Word token //-------------------------------------------------------------//
 
 const (
-	WORD_KIND_UNDEFINED = ""
-	WORD_KIND_CONSTANT  = "CONSTANT"
-	WORD_KIND_VARIABLE  = "VARIABLE"
-	WORD_KIND_FUNCTION  = "FUNCTION"
+	WORD_KIND_UNSPECIFIED = ""
+	WORD_KIND_CONSTANT    = "CONSTANT"
+	WORD_KIND_VARIABLE    = "VARIABLE"
+	WORD_KIND_FUNCTION    = "FUNCTION"
 )
 
 // Represents constants, variables and functions (basically, everything that
@@ -68,8 +67,14 @@ type TokenWord struct {
 	Kind  string
 }
 
+func NewTokenWord(v string) TokenWord {
+	return TokenWord{
+		Value: v,
+	}
+}
+
 func (t TokenWord) Type() string {
-	if t.Kind == WORD_KIND_UNDEFINED {
+	if t.Kind == WORD_KIND_UNSPECIFIED {
 		return "WORD"
 	} else {
 		return t.Kind
@@ -80,15 +85,26 @@ func (t TokenWord) ToString() string {
 	return t.Value
 }
 
-// operator
+// Operator token //---------------------------------------------------------//
 
 type TokenOperator struct {
-	Value string
+	Value         string
+	Precedence    int
+	Associativity string
 }
 
 func NewTokenOperator(v string) TokenOperator {
-	return TokenOperator{
-		Value: v,
+	oper, isOper := lexemes.IsOperator(v)
+	if isOper {
+		return TokenOperator{
+			Value:         oper.Value,
+			Precedence:    oper.Precedence,
+			Associativity: oper.Associativity,
+		}
+	} else {
+		return TokenOperator{
+			Value: v,
+		}
 	}
 }
 
@@ -100,12 +116,7 @@ func (t TokenOperator) ToString() string {
 	return t.Value
 }
 
-func (t TokenOperator) Definition() lexemes.OperatorDefinition {
-	def, _ := lexemes.IsOperator(t.Value)
-	return def
-}
-
-// punctuation
+// Punctuation token //------------------------------------------------------//
 
 type TokenPunctuation struct {
 	Value string
@@ -125,30 +136,6 @@ func (t TokenPunctuation) ToString() string {
 	return t.Value
 }
 
-func (t TokenPunctuation) IsParenthesis() bool {
-	return (t.Value == "(") || (t.Value == ")")
-}
-
 func (t TokenPunctuation) IsLeftParenthesis() bool {
 	return t.Value == "("
-}
-
-/* Helpers *******************************************************************/
-
-func StringifyTokens(tl []Token, delimeter string) string {
-	var s strings.Builder
-
-	tlLastIndex := len(tl) - 1
-
-	for i, t := range tl {
-		a := t.ToString()
-
-		if i < tlLastIndex {
-			a += delimeter
-		}
-
-		s.WriteString(a)
-	}
-
-	return s.String()
 }

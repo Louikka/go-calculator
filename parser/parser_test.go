@@ -1,11 +1,12 @@
 package parser
 
 import (
-	"gocalc/interpreter/scanner"
+	"gocalc/scanner"
+	token "gocalc/tokens"
 	"testing"
 )
 
-func TestIsOperatorStart(t *testing.T) {
+func TestToPostfix(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
@@ -62,12 +63,12 @@ func TestIsOperatorStart(t *testing.T) {
 			t.Errorf("\"%s\" (case no.%d) error => %s", test.input, i, err)
 		}
 
-		rpn, err := converExpressionToRPN(tl)
+		rpn, err := ToPostfix(tl)
 		if err != nil {
 			t.Errorf("\"%s\" (case no.%d) error => %s", test.input, i, err)
 		}
 
-		str := scanner.StringifyTokens(rpn, " ")
+		str := token.Stringify(rpn, " ")
 		if str != test.expected {
 			t.Errorf("\"%s\" (case no.%d) => expected \"%s\", got \"%s\"", test.input, i, test.expected, str)
 		}
