@@ -23,6 +23,7 @@ In addition, various functions and constants are also availible.
     - `SQRT(x)` — square root function.
     - `CBRT(x)` — cubic root function.
     - `ROUND(x)` — rounds to the nearest integer.
+    - `RAND()` — returns random floating-point number in range [0, 1).
     - `SUM(i=START..END, x)` — summation function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
     - `PROD(i=START..END, x)` — product (multiplication) function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
 

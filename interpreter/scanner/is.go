@@ -1,7 +1,7 @@
 package scanner
 
 import (
-	"gocalc/interpreter/lexemes"
+	l "gocalc/interpreter/lexemes"
 	"unicode"
 )
 
@@ -21,8 +21,8 @@ func isWhitespace(b byte) bool {
 }
 
 func isOperatorStart(b byte) bool {
-	for _, s := range lexemes.DEFINED_OPERATORS {
-		if s[0] == b {
+	for _, oper := range l.DEFINED_OPERATORS {
+		if oper.Value[0] == b {
 			return true
 		}
 	}
@@ -31,11 +31,15 @@ func isOperatorStart(b byte) bool {
 }
 
 func isPunctuationStart(b byte) bool {
-	for _, s := range lexemes.DEFINED_PUCTUATION {
-		if s[0] == b {
+	for _, punc := range l.DEFINED_PUCTUATION {
+		if punc.Value[0] == b {
 			return true
 		}
 	}
 
 	return false
+}
+
+func isLeftParenthesis(b byte) bool {
+	return string(b) == "("
 }

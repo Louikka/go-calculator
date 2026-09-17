@@ -131,10 +131,7 @@ func TestScanner_Peek(t *testing.T) {
 	scanner := NewScanner(s)
 
 	for i, c := range cases {
-		char, err := scanner.peek(c.peekPos)
-		if err != nil {
-			t.Errorf("(case no.%d) error => %s", i, err)
-		}
+		char := scanner.peek(c.peekPos)
 		if char != c.expectedChar {
 			t.Errorf("(case no.%d) => mismatched char %d instead of %d", i, char, c.expectedChar)
 		}
@@ -152,10 +149,7 @@ func TestScanner_Next(t *testing.T) {
 	scanner := NewScanner(s)
 
 	for i, expected := range expectedChars {
-		char, err := scanner.next()
-		if err != nil {
-			t.Errorf("(case no.%d) error => %s", i, err)
-		}
+		char := scanner.next()
 		if char != expected {
 			t.Errorf("(case no.%d) => mismatched char %d instead of %d", i, char, expected)
 		}
@@ -245,30 +239,37 @@ func TestScanner_ReadWord(t *testing.T) {
 	tests := []struct {
 		s        string
 		expected string
+		kind     string
 	}{
 		{
 			s:        "PI",
 			expected: "PI",
+			kind:     WORD_KIND_CONSTANT,
 		},
 		{
 			s:        "e",
 			expected: "E",
+			kind:     WORD_KIND_CONSTANT,
 		},
 		{
 			s:        "SQRT()",
 			expected: "SQRT",
+			kind:     WORD_KIND_FUNCTION,
 		},
 		{
-			s:        "SQRT2",
-			expected: "SQRT2",
+			s:        "ATAN ( )",
+			expected: "ATAN",
+			kind:     WORD_KIND_FUNCTION,
 		},
 		{
-			s:        "SQRT3 * 4.5",
-			expected: "SQRT3",
+			s:        "a1",
+			expected: "A1",
+			kind:     WORD_KIND_VARIABLE,
 		},
 		{
-			s:        "SQRT5+SQRT(6)",
-			expected: "SQRT5",
+			s:        "ABC123 * 4.5",
+			expected: "ABC123",
+			kind:     WORD_KIND_VARIABLE,
 		},
 	}
 
@@ -281,10 +282,13 @@ func TestScanner_ReadWord(t *testing.T) {
 		if w.ToString() != test.expected {
 			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, w.ToString())
 		}
+		if w.Kind != test.kind {
+			t.Errorf("(case no.%d) => expected word of kind \"%s\", got \"%s\"", i, test.kind, w.Kind)
+		}
 	}
 }
 
-func TestScannerOutput(t *testing.T) {
+func TestScannerOutputErrors(t *testing.T) {
 	tests := []string{
 		"0",
 		"1 + 2",

@@ -83,17 +83,6 @@ func (n NodeFuncCall) Argc() int {
 	return len(n.Arguments)
 }
 
-// IRANGE function main argument
-
-type NodeIRangeFuncMainArg struct {
-	Variable NodeVariable
-	Range    NodeRange
-}
-
-func (n NodeIRangeFuncMainArg) Type() string {
-	return "IRANGE_FUNCTION_MAIN_ARG"
-}
-
 // binary expression
 
 type NodeBinary struct {
@@ -104,4 +93,15 @@ type NodeBinary struct {
 
 func (n NodeBinary) Type() string {
 	return "BINARY"
+}
+
+// assign expression
+
+type NodeAssign struct {
+	Left  NodeVariable
+	Right Node
+}
+
+func (n NodeAssign) Type() string {
+	return "ASSIGN"
 }

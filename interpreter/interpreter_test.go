@@ -19,7 +19,7 @@ func tt(t *testing.T, tests []TestEvalS) bool {
 			return false
 		}
 
-		toStr := lib.F64ToString(res)
+		toStr := lib.FloatToString(res)
 		if toStr != test.expected {
 			t.Errorf("\"%s\" (case no.%d) => expected %s, got %s", test.input, i, test.expected, toStr)
 			return false
@@ -45,7 +45,7 @@ func TestEvaluateString_Expression(t *testing.T) {
 		},
 		{
 			input:    "1 * 2 / 3 * 4",
-			expected: lib.F64ToString(1.0 * 2.0 / 3.0 * 4.0),
+			expected: lib.FloatToString(1.0 * 2.0 / 3.0 * 4.0),
 		},
 		{
 			input:    "1.2 + 3.4",
@@ -112,18 +112,18 @@ func TestEvaluateString_Constants(t *testing.T) {
 	tests := []TestEvalS{
 		{
 			input:    "PI",
-			expected: lib.F64ToString(math.Pi),
+			expected: lib.FloatToString(math.Pi),
 		},
 		{
 			input:    "E - 1",
-			expected: lib.F64ToString((math.E - 1) - 0.0000000000000002),
-			//                                     ^ expected 1.7182818284590453, got 1.718281828459045??
-			//                                      where did 0.0000000000000003 came from?
+			expected: lib.FloatToString((math.E - 1) - 0.0000000000000002),
+			//                                         ^ expected 1.7182818284590453, got 1.718281828459045??
+			//                                          where did 0.0000000000000003 came from?
 			//                                                                 ^
 		},
 		{
 			input:    "(PSI * 3) + 1.5",
-			expected: lib.F64ToString((psi * 3) + 1.5),
+			expected: lib.FloatToString((psi * 3) + 1.5),
 		},
 	}
 

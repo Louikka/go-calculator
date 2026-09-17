@@ -1,13 +1,16 @@
 package scanner
 
 import (
+	"gocalc/interpreter/lexemes"
 	"math"
 	"strconv"
 	"strings"
 )
 
 type Token interface {
+	// String representation of a token type.
 	Type() string
+	// String representation of a token value.
 	ToString() string
 }
 
@@ -51,12 +54,26 @@ func (t TokenNumber) IsInt() bool {
 
 // word
 
+const (
+	WORD_KIND_UNDEFINED = ""
+	WORD_KIND_CONSTANT  = "CONSTANT"
+	WORD_KIND_VARIABLE  = "VARIABLE"
+	WORD_KIND_FUNCTION  = "FUNCTION"
+)
+
+// Represents constants, variables and functions (basically, everything that
+// starts with a letter).
 type TokenWord struct {
 	Value string
+	Kind  string
 }
 
 func (t TokenWord) Type() string {
-	return "WORD"
+	if t.Kind == WORD_KIND_UNDEFINED {
+		return "WORD"
+	} else {
+		return t.Kind
+	}
 }
 
 func (t TokenWord) ToString() string {
@@ -83,6 +100,11 @@ func (t TokenOperator) ToString() string {
 	return t.Value
 }
 
+func (t TokenOperator) Definition() lexemes.OperatorDefinition {
+	def, _ := lexemes.IsOperator(t.Value)
+	return def
+}
+
 // punctuation
 
 type TokenPunctuation struct {
@@ -103,13 +125,29 @@ func (t TokenPunctuation) ToString() string {
 	return t.Value
 }
 
+func (t TokenPunctuation) IsParenthesis() bool {
+	return (t.Value == "(") || (t.Value == ")")
+}
+
+func (t TokenPunctuation) IsLeftParenthesis() bool {
+	return t.Value == "("
+}
+
 /* Helpers *******************************************************************/
 
-func StringifyTokens(tl []Token) string {
+func StringifyTokens(tl []Token, delimeter string) string {
 	var s strings.Builder
 
-	for _, t := range tl {
-		s.WriteString(t.ToString())
+	tlLastIndex := len(tl) - 1
+
+	for i, t := range tl {
+		a := t.ToString()
+
+		if i < tlLastIndex {
+			a += delimeter
+		}
+
+		s.WriteString(a)
 	}
 
 	return s.String()

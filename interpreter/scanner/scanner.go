@@ -2,8 +2,7 @@ package scanner
 
 import (
 	"fmt"
-	"gocalc/interpreter/lexemes"
-	"slices"
+	l "gocalc/interpreter/lexemes"
 	"strconv"
 	"strings"
 )
@@ -26,22 +25,22 @@ func (s *Scanner) isLast() bool {
 }
 
 // Reports if no available characters left (meaning peek() and next() will
-// fail).
+// panic).
 func (s *Scanner) isEnd() bool {
 	return s.pos >= len(s.s)
 }
 
-func (s *Scanner) peek(offset int) (byte, error) {
+func (s *Scanner) peek(offset int) byte {
 	newPos := s.pos + offset
 
 	if newPos < 0 || newPos >= len(s.s) {
-		return 0, ErrOutOfBounds
+		panic("scanner error: index out of range")
 	}
 
-	return s.s[newPos], nil
+	return s.s[newPos]
 }
 
-func (s *Scanner) next() (byte, error) {
+func (s *Scanner) next() byte {
 	s.pos++
 	return s.peek(0)
 }
@@ -59,19 +58,14 @@ func (s *Scanner) readwhile(predicate _PredicateFunc) (string, error) {
 	str := ""
 
 	for !s.isEnd() {
-		char, err := s.peek(0)
-		if err != nil {
-			return str, err
-		}
+		var char, before, after byte = 0, 0, 0
 
-		before, err := s.peek(-1)
-		if err != nil {
-			before = 0
+		char = s.peek(0)
+		if s.pos > 0 {
+			before = s.peek(-1)
 		}
-
-		after, err := s.peek(1)
-		if err != nil {
-			after = 0
+		if !s.isLast() {
+			after = s.peek(1)
 		}
 
 		predic, err := predicate(char, before, after, str)
@@ -84,7 +78,8 @@ func (s *Scanner) readwhile(predicate _PredicateFunc) (string, error) {
 		}
 
 		str += string(char)
-		s.next()
+
+		s.pos++
 	}
 
 	return str, nil
@@ -135,22 +130,43 @@ func (s *Scanner) readNumber() (TokenNumber, error) {
 }
 
 func (s *Scanner) readWord() (TokenWord, error) {
+	t := TokenWord{}
+
 	w, err := s.readwhile(func(char, _, _ byte, s string) (bool, error) {
 		return isLetter(char) || (isDigit(char) && len(s) > 0), nil
 	})
+	if err != nil {
+		return t, err
+	}
 
-	return TokenWord{
-		Value: w,
-	}, err
+	t.Value = w
+	t.Kind = WORD_KIND_VARIABLE
+
+	if _, isConst := l.IsConstant(w); isConst {
+		t.Kind = WORD_KIND_CONSTANT
+	}
+
+	_, err = s.readwhile(func(char, _, _ byte, _ string) (bool, error) {
+		return isWhitespace(char), nil
+	})
+	if err != nil {
+		return t, err
+	}
+
+	if !s.isEnd() && isLeftParenthesis(s.peek(0)) {
+		t.Kind = WORD_KIND_FUNCTION
+	}
+
+	return t, err
 }
 
 func (s *Scanner) readOperator() (TokenOperator, error) {
 	o, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > lexemes.LONGEST_OPERATOR_LEN {
+		if len(str) > l.LONGEST_OPERATOR_LEN {
 			return false, ErrTokenTooLong
 		}
 
-		if slices.Contains(lexemes.DEFINED_OPERATORS, str) {
+		if _, isOper := l.IsOperator(str); isOper {
 			return false, nil
 		}
 
@@ -164,11 +180,11 @@ func (s *Scanner) readOperator() (TokenOperator, error) {
 
 func (s *Scanner) readPunctuation() (TokenPunctuation, error) {
 	p, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > lexemes.LONGEST_PUCTUATION_LEN {
+		if len(str) > l.LONGEST_PUCTUATION_LEN {
 			return false, ErrTokenTooLong
 		}
 
-		if slices.Contains(lexemes.DEFINED_PUCTUATION, str) {
+		if _, isPunc := l.IsPunctuation(str); isPunc {
 			return false, nil
 		}
 
@@ -192,10 +208,7 @@ func (s *Scanner) scanNextToken() (Token, error) {
 		return InvalidToken{}, ErrEndOfInput
 	}
 
-	char, err := s.peek(0)
-	if err != nil {
-		return InvalidToken{}, err
-	}
+	char := s.peek(0)
 
 	if isDigit(char) {
 		return s.readNumber()

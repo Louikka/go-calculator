@@ -26,7 +26,7 @@ func TestLongestStringLenInSlice(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		l := LongestStringLenInSlice(test.input)
+		l := LongestStringInSlice(test.input)
 		if l != test.expected {
 			t.Errorf("(case no.%d) => expected %d, got %d", i, test.expected, l)
 		}

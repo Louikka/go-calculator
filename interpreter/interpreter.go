@@ -6,28 +6,15 @@ import (
 	"gocalc/interpreter/parser"
 	"gocalc/interpreter/scanner"
 	"math"
-)
-
-const (
-	psi = 1.46557123187676802665 // https://oeis.org/A092526
-	//    1.465571231876768026656731
+	"math/rand/v2"
 )
 
 func solveNodeConstant(node parser.NodeConstant) (float64, error) {
-	switch node.Name {
-	case l.CONSTANT_PI:
-		return math.Pi, nil
+	c, isConst := l.IsConstant(node.Name)
 
-	case l.CONSTANT_E:
-		return math.E, nil
-
-	case l.CONSTANT_PHI:
-		return math.Phi, nil
-
-	case l.CONSTANT_PSI:
-		return psi, nil
-
-	default:
+	if isConst {
+		return c.Value, nil
+	} else {
 		return 0, fmt.Errorf("undefined constant \"%s\"", node.Name)
 	}
 }
@@ -142,6 +129,15 @@ func solveNodeDefaultFuncCall(node parser.NodeFuncCall) (float64, error) {
 			return math.Round(funcArgs[0]), nil
 		}
 
+	case l.FUNCTION_RAND:
+		{
+			if funcArgc != 0 {
+				return 0, fmt.Errorf("%s expected 0 argument, but got %d", funcName, funcArgc)
+			}
+
+			return rand.Float64(), nil
+		}
+
 	default:
 		return 0, fmt.Errorf("undefined function \"%s\"", funcName)
 	}
@@ -155,9 +151,17 @@ func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 		return 0, fmt.Errorf("%s expected 2 arguments, but got %d", funcName, funcArgc)
 	}
 
-	mainArg, isIRangeFunc := node.Arguments[0].(parser.NodeIRangeFuncMainArg)
-	if !isIRangeFunc {
-		return 0, fmt.Errorf("%s expected variable and range as first argument, but got %s", funcName, node.Arguments[0].Type())
+	assArg, isAssign := node.Arguments[0].(parser.NodeAssign)
+	if !isAssign {
+		return 0, fmt.Errorf(
+			"%s expected an assign expression as first argument, but got %s",
+			funcName,
+			node.Arguments[0].Type(),
+		)
+	}
+	assArgRight, isRange := assArg.Right.(parser.NodeRange)
+	if !isRange {
+		return 0, fmt.Errorf("%s expected a range expression as right hand expression", funcName)
 	}
 
 	secondArg := node.Arguments[1]
@@ -166,15 +170,15 @@ func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 	case l.FUNCTION_SUM:
 		{
 			var sum float64 = 0
-			for i := mainArg.Range.Start; i <= mainArg.Range.End; i++ {
+			for i := assArgRight.Start; i <= assArgRight.End; i++ {
 				iterationRes, err := solveNode(secondArg, []_VariableContext{
 					{
-						Name:  mainArg.Variable.Name,
+						Name:  assArg.Left.Name,
 						Value: float64(i),
 					},
 				})
 				if err != nil {
-					return 0, err
+					return sum, err
 				}
 
 				sum += iterationRes
@@ -186,15 +190,15 @@ func solveNodeIRangeFuncCall(node parser.NodeFuncCall) (float64, error) {
 	case l.FUNCTION_PROD:
 		{
 			var prod float64 = 1
-			for i := mainArg.Range.Start; i <= mainArg.Range.End; i++ {
+			for i := assArgRight.Start; i <= assArgRight.End; i++ {
 				iterationRes, err := solveNode(secondArg, []_VariableContext{
 					{
-						Name:  mainArg.Variable.Name,
+						Name:  assArg.Left.Name,
 						Value: float64(i),
 					},
 				})
 				if err != nil {
-					return 0, err
+					return prod, err
 				}
 
 				prod *= iterationRes

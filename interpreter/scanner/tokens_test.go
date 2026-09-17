@@ -61,7 +61,7 @@ func TestStringifyTokens(t *testing.T) {
 			t.Errorf("(case no.%d) => Scan error : %s", i, err)
 		}
 
-		s := StringifyTokens(tl)
+		s := StringifyTokens(tl, "")
 		if s != test.expected {
 			t.Errorf("(case no.%d) => got %s, expected %s", i, s, test.expected)
 		}
