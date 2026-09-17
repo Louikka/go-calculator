@@ -11,6 +11,6 @@ insert_final_newline = true
 indent_style = tab
 indent_size = 8
 
-[Makefile]
+[{go.mod,Makefile}]
 indent_style = tab
 indent_size = 8
