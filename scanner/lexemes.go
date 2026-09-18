@@ -71,7 +71,7 @@ func IsOperator(s string) (OperatorDefinition, bool) {
 // Length of the longest operator (in bytes).
 var LongestOperatorLen = LongestLen(DEFINED_OPERATORS)
 
-var PossibleOperatorsPrecedence = func() []int {
+var OperatorsPrecedenceSorted = func() []int {
 	l := []int{}
 
 	for _, oper := range DEFINED_OPERATORS {
@@ -79,6 +79,8 @@ var PossibleOperatorsPrecedence = func() []int {
 			l = append(l, oper.Precedence)
 		}
 	}
+
+	slices.Sort(l)
 
 	return l
 }()
