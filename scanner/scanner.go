@@ -2,8 +2,6 @@ package scanner
 
 import (
 	"fmt"
-	"gocalc/lexemes"
-	token "gocalc/tokens"
 	"strconv"
 	"strings"
 )
@@ -99,7 +97,7 @@ func (s *Scanner) skipwsp() error {
 
 //---------------------------------------------------------------------------//
 
-func (s *Scanner) readNumber() (token.TokenNumber, error) {
+func (s *Scanner) readNumber() (TokenNumber, error) {
 	isFloat := false
 	isScientific := false
 
@@ -133,16 +131,16 @@ func (s *Scanner) readNumber() (token.TokenNumber, error) {
 		return isDigit(char), nil
 	})
 	if err != nil {
-		return token.TokenNumber{}, err
+		return TokenNumber{}, err
 	}
 
 	n, err := strconv.ParseFloat(r, 64)
 
-	return token.NewTokenNumber(n), err
+	return NewTokenNumber(n), err
 }
 
-func (s *Scanner) readWord() (token.TokenWord, error) {
-	t := token.TokenWord{}
+func (s *Scanner) readWord() (TokenWord, error) {
+	t := TokenWord{}
 
 	w, err := s.readwhile(func(char, _, _ byte, s string) (bool, error) {
 		return isLetter(char) || (isDigit(char) && len(s) > 0), nil
@@ -159,54 +157,54 @@ func (s *Scanner) readWord() (token.TokenWord, error) {
 	}
 
 	if !s.isEnd() && isLeftParenthesis(s.peek(0)) {
-		t.Kind = token.WORD_KIND_FUNCTION
+		t.Kind = WORD_KIND_FUNCTION
 	}
 
 	return t, err
 }
 
-func (s *Scanner) readOperator() (token.TokenOperator, error) {
+func (s *Scanner) readOperator() (TokenOperator, error) {
 	o, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > lexemes.LONGEST_OPERATOR_LEN {
+		if len(str) > LongestOperatorLen {
 			return false, ErrTokenTooLong
 		}
 
-		if _, isOper := lexemes.IsOperator(str); isOper {
+		if _, isOper := IsOperator(str); isOper {
 			return false, nil
 		}
 
 		return true, nil
 	})
 
-	return token.NewTokenOperator(o), err
+	return NewTokenOperator(o), err
 }
 
-func (s *Scanner) readPunctuation() (token.TokenPunctuation, error) {
+func (s *Scanner) readPunctuation() (TokenPunctuation, error) {
 	p, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > lexemes.LONGEST_PUCTUATION_LEN {
+		if len(str) > LongestPunctuationLen {
 			return false, ErrTokenTooLong
 		}
 
-		if _, isPunc := lexemes.IsPunctuation(str); isPunc {
+		if _, isPunc := IsPunctuation(str); isPunc {
 			return false, nil
 		}
 
 		return true, nil
 	})
 
-	return token.TokenPunctuation{
+	return TokenPunctuation{
 		Value: p,
 	}, err
 }
 
-func (s *Scanner) scanNextToken() (token.Token, error) {
+func (s *Scanner) scanNextToken() (Token, error) {
 	err := s.skipwsp()
 	if err != nil {
-		return token.TokenInvalid{}, err
+		return TokenInvalid{}, err
 	}
 
 	if s.isEnd() {
-		return token.TokenInvalid{}, ErrEndOfInput
+		return TokenInvalid{}, ErrEndOfInput
 	}
 
 	char := s.peek(0)
@@ -227,17 +225,17 @@ func (s *Scanner) scanNextToken() (token.Token, error) {
 		return s.readPunctuation()
 	}
 
-	return token.TokenInvalid{}, fmt.Errorf("undefined character \"%c\"", char)
+	return TokenInvalid{}, fmt.Errorf("undefined character \"%c\"", char)
 }
 
 //---------------------------------------------------------------------------//
 
-func Scan(s string) ([]token.Token, error) {
-	output := []token.Token{}
+func Scan(s string) ([]Token, error) {
+	output := []Token{}
 
 	scanner := NewScanner(s)
 	if scanner.IsEmpty() {
-		return []token.Token{}, nil
+		return []Token{}, nil
 	}
 
 	for !scanner.isEnd() {

@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	token "gocalc/tokens"
 	"testing"
 )
 
@@ -253,12 +252,12 @@ func TestScanner_ReadWord(t *testing.T) {
 		{
 			s:        "SQRT()",
 			expected: "SQRT",
-			kind:     token.WORD_KIND_FUNCTION,
+			kind:     WORD_KIND_FUNCTION,
 		},
 		{
 			s:        "ATAN ( )",
 			expected: "ATAN",
-			kind:     token.WORD_KIND_FUNCTION,
+			kind:     WORD_KIND_FUNCTION,
 		},
 		{
 			s:        "a1",

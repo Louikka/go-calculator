@@ -1,7 +1,6 @@
-package token
+package scanner
 
 import (
-	"gocalc/lexemes"
 	"math"
 	"strconv"
 )
@@ -94,7 +93,7 @@ type TokenOperator struct {
 }
 
 func NewTokenOperator(v string) TokenOperator {
-	oper, isOper := lexemes.IsOperator(v)
+	oper, isOper := IsOperator(v)
 	if isOper {
 		return TokenOperator{
 			Value:         oper.Value,

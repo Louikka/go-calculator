@@ -1,119 +1,54 @@
 package parser
 
 import (
-	"gocalc/lib"
-	token "gocalc/tokens"
+	"fmt"
+	"gocalc/scanner"
 )
 
-func isTopALeftParenthesis(stack lib.Stack[token.Token]) bool {
-	top := stack.Top()
+func parseBinary(expr []scanner.Token) (NodeBinary, error) {
+	var operator scanner.TokenOperator
+	left := []scanner.Token{}
+	right := []scanner.Token{}
 
-	punc, isPunc := top.(token.TokenPunctuation)
-	if isPunc && punc.IsLeftParenthesis() {
-		return true
-	}
+	r := false
+	depth := 0
 
-	return false
-}
+	for _, prec := range scanner.PossibleOperatorsPrecedence {
+		for _, t := range expr {
+			tOper, isOper := t.(scanner.TokenOperator)
+			if isOper && depth == 0 && tOper.Precedence == prec {
+				operator = tOper
+				r = true
+				continue
+			}
 
-// https://en.wikipedia.org/wiki/Shunting_yard_algorithm
-func ToPostfix(expr []token.Token) ([]token.Token, error) {
-	output := lib.NewStack[token.Token]()
-	stack := lib.NewStack[token.Token]()
+			tPunc, isPunc := t.(scanner.TokenPunctuation)
+			if isPunc {
+				switch tPunc.Value {
+				case "(":
+					depth++
 
-	for _, t := range expr {
-		switch tt := t.(type) {
-		case token.TokenNumber:
-			output.Append(tt)
+				case ")":
+					depth--
+					if depth < 0 {
+						return NodeBinary{}, fmt.Errorf("mismatched parenthesis")
+					}
+				}
+			}
 
-		case token.TokenWord:
-			if tt.Kind == token.WORD_KIND_FUNCTION {
-				stack.Append(tt)
+			if r {
+				right = append(right, t)
 			} else {
-				output.Append(tt)
+				left = append(left, t)
 			}
-
-		case token.TokenOperator:
-			for !stack.IsEmpty() {
-				o1 := tt
-				o2, isOper := stack.Top().(token.TokenOperator)
-				if !isOper {
-					break
-				}
-
-				c1 := o2.Precedence > o1.Precedence
-				c2 := o1.Precedence == o2.Precedence
-				c3 := o1.Associativity == "LEFT"
-
-				if c1 || (c2 && c3) {
-					output.Append(o2)
-					stack.Pop()
-				} else {
-					break
-				}
-			}
-
-			stack.Append(tt)
-
-		case token.TokenPunctuation:
-			switch tt.Value {
-			case ",":
-				for !stack.IsEmpty() {
-					if isTopALeftParenthesis(stack) {
-						break
-					}
-
-					output.Append(stack.Pop())
-				}
-
-			case "(":
-				stack.Append(tt)
-
-			case ")":
-				for !stack.IsEmpty() {
-					if isTopALeftParenthesis(stack) {
-						break
-					}
-
-					output.Append(stack.Pop())
-				}
-
-				if stack.IsEmpty() {
-					return output.Stack, ErrMismatchedParenthesis
-				}
-
-				if !isTopALeftParenthesis(stack) {
-					return output.Stack, ErrMismatchedParenthesis
-				}
-
-				// discard left parenthesis from stack top
-				stack.Pop()
-
-				if !stack.IsEmpty() {
-					tTop := stack.Top()
-					tTopWord, isWord := tTop.(token.TokenWord)
-					if isWord && (tTopWord.Kind == token.WORD_KIND_FUNCTION) {
-						output.Append(tTop)
-						stack.Pop()
-					}
-				}
-
-			default:
-				stack.Append(tt)
-			}
-
-		default:
-			output.Append(tt)
-		}
-	}
-
-	for !stack.IsEmpty() {
-		if isTopALeftParenthesis(stack) {
-			return output.Stack, ErrMismatchedParenthesis
 		}
 
-		output.Append(stack.Pop())
+		if r {
+			break
+		} else {
+			r = false
+			left = []scanner.Token{}
+			right = []scanner.Token{}
+		}
 	}
-
-	return output.Stack, nil
 }

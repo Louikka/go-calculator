@@ -1,4 +1,8 @@
-package lexemes
+package scanner
+
+import "slices"
+
+// Operators //--------------------------------------------------------------//
 
 const (
 	ASSOC_UNDEFINED = ""
@@ -65,15 +69,51 @@ func IsOperator(s string) (OperatorDefinition, bool) {
 }
 
 // Length of the longest operator (in bytes).
-var LONGEST_OPERATOR_LEN = func() int {
-	maxLen := 0
+var LongestOperatorLen = LongestLen(DEFINED_OPERATORS)
+
+var PossibleOperatorsPrecedence = func() []int {
+	l := []int{}
 
 	for _, oper := range DEFINED_OPERATORS {
-		newLen := oper.Len()
-		if newLen > maxLen {
-			maxLen = newLen
+		if !slices.Contains(l, oper.Precedence) {
+			l = append(l, oper.Precedence)
 		}
 	}
 
-	return maxLen
+	return l
 }()
+
+// Punctuation //------------------------------------------------------------//
+
+type PunctuationDefinition struct {
+	Value string
+}
+
+func (d PunctuationDefinition) Len() int {
+	return len(d.Value)
+}
+
+var DEFINED_PUCTUATION = []PunctuationDefinition{
+	{
+		Value: "(",
+	},
+	{
+		Value: ")",
+	},
+	{
+		Value: ",",
+	},
+}
+
+func IsPunctuation(s string) (PunctuationDefinition, bool) {
+	for _, def := range DEFINED_PUCTUATION {
+		if def.Value == s {
+			return def, true
+		}
+	}
+
+	return PunctuationDefinition{}, false
+}
+
+// Length of the longest punctuation (in bytes).
+var LongestPunctuationLen = LongestLen(DEFINED_PUCTUATION)
