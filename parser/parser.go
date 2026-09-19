@@ -47,15 +47,31 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 				return NodeBinary{}, err
 			}
 
-			return NodeBinary{
-				Operator: operator.Value,
-				Left:     leftParsed,
-				Right:    rightParsed,
-			}, nil
+			return NewNodeBinary(operator.Value, leftParsed, rightParsed), nil
 		}
 	}
 
 	return NodeBinary{}, ErrNotABinary
+}
+
+func parseFuncArgs(expr []scanner.Token) ([]Node, error) {
+	es, err := sliceTokenListByComma(expr)
+	args := []Node{}
+
+	if err != nil {
+		return args, nil
+	}
+
+	for _, e := range es {
+		parsed, err := parseExpression(e)
+		if err != nil {
+			return args, err
+		}
+
+		args = append(args, parsed)
+	}
+
+	return args, nil
 }
 
 func parseExpression(expr []scanner.Token) (Node, error) {
@@ -69,12 +85,19 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 
 	switch t := expr[0].(type) {
 	case scanner.TokenNumber:
-		return NodeNumber{
-			Value: t.Value,
-		}, nil
+		return NewNodeNumber(t.Value), nil
 
 	case scanner.TokenWord:
-		// todo
+		if t.Kind == scanner.WORD_KIND_FUNCTION {
+			args, err := parseFuncArgs(readParentheses(expr))
+			if err != nil {
+				return NodeInvalid{}, err
+			}
+
+			return NewNodeFuncCall(t.Value, args), nil
+		} else {
+			return NewNodeIdentifier(t.Value), nil
+		}
 
 	case scanner.TokenPunctuation:
 		if t.Value == "(" {
@@ -85,4 +108,10 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 	}
 
 	return NodeInvalid{}, fmt.Errorf("failed to parse an expression")
+}
+
+//---------------------------------------------------------------------------//
+
+func Parse(input []scanner.Token) (Node, error) {
+	return parseExpression(input)
 }

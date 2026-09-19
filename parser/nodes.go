@@ -30,6 +30,12 @@ type NodeNumber struct {
 	Value float64
 }
 
+func NewNodeNumber(v float64) NodeNumber {
+	return NodeNumber{
+		Value: v,
+	}
+}
+
 func (n NodeNumber) Type() string {
 	return "NUMBER"
 }
@@ -41,28 +47,31 @@ type NodeRange struct {
 	End   int
 }
 
+func NewNodeRange(start, end int) NodeRange {
+	return NodeRange{
+		Start: start,
+		End:   end,
+	}
+}
+
 func (n NodeRange) Type() string {
 	return "RANGE"
 }
 
-// variable
+// identifier
 
-type NodeVariable struct {
+type NodeIdentifier struct {
 	Name string
 }
 
-func (n NodeVariable) Type() string {
-	return "VARIABLE"
+func NewNodeIdentifier(name string) NodeIdentifier {
+	return NodeIdentifier{
+		Name: name,
+	}
 }
 
-// constant
-
-type NodeConstant struct {
-	Name string
-}
-
-func (n NodeConstant) Type() string {
-	return "CONSTANT"
+func (n NodeIdentifier) Type() string {
+	return "IDENTIFIER"
 }
 
 // function call
@@ -72,13 +81,18 @@ type NodeFuncCall struct {
 	Arguments []Node
 }
 
+func NewNodeFuncCall(name string, args []Node) NodeFuncCall {
+	return NodeFuncCall{
+		Name:      name,
+		Arguments: args,
+	}
+}
+
 func (n NodeFuncCall) Type() string {
 	return "FUNCTION_CALL"
 }
 
-// Returns arguments count.
-//
-//	len(node.Arguments)
+// Returns number of arguments.
 func (n NodeFuncCall) Argc() int {
 	return len(n.Arguments)
 }
@@ -91,17 +105,14 @@ type NodeBinary struct {
 	Right    Node
 }
 
+func NewNodeBinary(oper string, l, r Node) NodeBinary {
+	return NodeBinary{
+		Operator: oper,
+		Left:     l,
+		Right:    r,
+	}
+}
+
 func (n NodeBinary) Type() string {
 	return "BINARY"
-}
-
-// assign expression
-
-type NodeAssign struct {
-	Left  NodeVariable
-	Right Node
-}
-
-func (n NodeAssign) Type() string {
-	return "ASSIGN"
 }
