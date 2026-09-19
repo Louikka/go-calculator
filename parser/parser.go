@@ -112,6 +112,9 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 
 //---------------------------------------------------------------------------//
 
-func Parse(input []scanner.Token) (Node, error) {
-	return parseExpression(input)
+func Parse(input []scanner.Token) (NodeRoot, error) {
+	node, err := parseExpression(input)
+	return NodeRoot{
+		Expression: node,
+	}, err
 }

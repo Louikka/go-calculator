@@ -17,7 +17,7 @@ func (n NodeInvalid) Type() string {
 // root
 
 type NodeRoot struct {
-	Value Node
+	Expression Node
 }
 
 func (n NodeRoot) Type() string {
