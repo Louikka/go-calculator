@@ -19,6 +19,15 @@ func isWhitespace(b byte) bool {
 	return unicode.IsSpace(rune(b))
 }
 
+func isWordStart(b byte) bool {
+	return isLetter(b)
+}
+
+// Reports whether the byte b can be part of the word (except start).
+func isWordBody(b byte) bool {
+	return isLetter(b) || isDigit(b) || b == '_'
+}
+
 func isOperatorStart(b byte) bool {
 	for _, oper := range DEFINED_OPERATORS {
 		if oper.Value[0] == b {

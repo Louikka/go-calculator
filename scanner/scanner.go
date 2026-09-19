@@ -143,7 +143,12 @@ func (s *Scanner) readWord() (TokenWord, error) {
 	t := TokenWord{}
 
 	w, err := s.readwhile(func(char, _, _ byte, s string) (bool, error) {
-		return isLetter(char) || (isDigit(char) && len(s) > 0), nil
+		if len(s) == 0 {
+			// first character
+			return isWordStart(char), nil
+		} else {
+			return isWordBody(char), nil
+		}
 	})
 	if err != nil {
 		return t, err
@@ -158,6 +163,8 @@ func (s *Scanner) readWord() (TokenWord, error) {
 
 	if !s.isEnd() && isLeftParenthesis(s.peek(0)) {
 		t.Kind = WORD_KIND_FUNCTION
+	} else {
+		t.Kind = WORD_KIND_IDENTIFIER
 	}
 
 	return t, err

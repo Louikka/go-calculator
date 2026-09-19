@@ -244,10 +244,12 @@ func TestScanner_ReadWord(t *testing.T) {
 		{
 			s:        "PI",
 			expected: "PI",
+			kind:     WORD_KIND_IDENTIFIER,
 		},
 		{
 			s:        "e",
 			expected: "E",
+			kind:     WORD_KIND_IDENTIFIER,
 		},
 		{
 			s:        "SQRT()",
@@ -262,10 +264,17 @@ func TestScanner_ReadWord(t *testing.T) {
 		{
 			s:        "a1",
 			expected: "A1",
+			kind:     WORD_KIND_IDENTIFIER,
 		},
 		{
 			s:        "ABC123 * 4.5",
 			expected: "ABC123",
+			kind:     WORD_KIND_IDENTIFIER,
+		},
+		{
+			s:        "AB_C",
+			expected: "AB_C",
+			kind:     WORD_KIND_IDENTIFIER,
 		},
 	}
 
