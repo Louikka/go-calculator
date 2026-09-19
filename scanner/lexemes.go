@@ -53,7 +53,7 @@ var DEFINED_OPERATORS = []OperatorDefinition{
 	},
 	{
 		Value:         "..",
-		Precedence:    999,
+		Precedence:    4,
 		Associativity: ASSOC_LEFT,
 	},
 }
