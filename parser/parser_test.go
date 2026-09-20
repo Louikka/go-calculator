@@ -89,6 +89,18 @@ func TestParseBinary(t *testing.T) {
 				},
 			},
 		},
+		{
+			input: "1..2",
+			expected: NodeBinary{
+				Operator: "..",
+				Left: NodeNumber{
+					Value: 1,
+				},
+				Right: NodeNumber{
+					Value: 2,
+				},
+			},
+		},
 	}
 
 	for i, test := range tests {

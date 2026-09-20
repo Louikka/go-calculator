@@ -1,5 +1,7 @@
 package parser
 
+import "math"
+
 type Node interface {
 	Type() string
 }
@@ -38,6 +40,10 @@ func NewNodeNumber(v float64) NodeNumber {
 
 func (n NodeNumber) Type() string {
 	return "NUMBER"
+}
+
+func (t NodeNumber) IsInt() bool {
+	return t.Value == math.Trunc(t.Value)
 }
 
 // range
@@ -115,4 +121,22 @@ func NewNodeBinary(oper string, l, r Node) NodeBinary {
 
 func (n NodeBinary) Type() string {
 	return "BINARY"
+}
+
+// assign
+
+type NodeAssign struct {
+	Var  NodeIdentifier
+	Expr Node
+}
+
+func NewNodeAssign(v NodeIdentifier, expr Node) NodeAssign {
+	return NodeAssign{
+		Var:  v,
+		Expr: expr,
+	}
+}
+
+func (n NodeAssign) Type() string {
+	return "ASSIGN"
 }

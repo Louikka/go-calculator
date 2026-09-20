@@ -7,10 +7,16 @@ import "gocalc/scanner"
 func isBinary(expr []scanner.Token) bool {
 	depth := 0
 
-	for _, t := range expr {
+	for i, t := range expr {
 		_, isOper := t.(scanner.TokenOperator)
-		if isOper && depth == 0 {
-			return true
+		if isOper {
+			if i == 0 {
+				// unary operators are not counting
+				continue
+			}
+			if depth == 0 {
+				return true
+			}
 		} else {
 			tPunc, isPunc := t.(scanner.TokenPunctuation)
 			if isPunc {

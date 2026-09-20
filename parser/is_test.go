@@ -19,6 +19,14 @@ func TestIsBinary(t *testing.T) {
 			expected: false,
 		},
 		{
+			input:    "-1",
+			expected: false,
+		},
+		{
+			input:    "-1 + 2",
+			expected: true,
+		},
+		{
 			input:    "1 + 2 * 3",
 			expected: true,
 		},
@@ -40,6 +48,18 @@ func TestIsBinary(t *testing.T) {
 		},
 		{
 			input:    "PI * 4",
+			expected: true,
+		},
+		{
+			input:    "I = 12",
+			expected: true,
+		},
+		{
+			input:    "1.2",
+			expected: false,
+		},
+		{
+			input:    "1..2",
 			expected: true,
 		},
 	}
