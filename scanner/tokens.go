@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"math"
 	"strconv"
 )
 
@@ -46,10 +45,6 @@ func (t TokenNumber) ToString() string {
 	return strconv.FormatFloat(t.Value, 'f', -1, 64)
 }
 
-func (t TokenNumber) IsInt() bool {
-	return t.Value == math.Trunc(t.Value)
-}
-
 // Word token //-------------------------------------------------------------//
 
 const (
@@ -92,7 +87,7 @@ type TokenOperator struct {
 }
 
 func NewTokenOperator(v string) TokenOperator {
-	oper, isOper := IsOperator(v)
+	oper, isOper := isOperator(v)
 	if isOper {
 		return TokenOperator{
 			Value:         oper.Value,
@@ -112,6 +107,10 @@ func (t TokenOperator) Type() string {
 
 func (t TokenOperator) ToString() string {
 	return t.Value
+}
+
+func (t TokenOperator) IsUnary() bool {
+	return t.Value == "+" || t.Value == "-"
 }
 
 // Punctuation token //------------------------------------------------------//

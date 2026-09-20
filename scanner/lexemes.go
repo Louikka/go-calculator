@@ -58,7 +58,7 @@ var DEFINED_OPERATORS = []OperatorDefinition{
 	},
 }
 
-func IsOperator(s string) (OperatorDefinition, bool) {
+func isOperator(s string) (OperatorDefinition, bool) {
 	for _, def := range DEFINED_OPERATORS {
 		if def.Value == s {
 			return def, true
@@ -107,7 +107,7 @@ var DEFINED_PUCTUATION = []PunctuationDefinition{
 	},
 }
 
-func IsPunctuation(s string) (PunctuationDefinition, bool) {
+func isPunctuation(s string) (PunctuationDefinition, bool) {
 	for _, def := range DEFINED_PUCTUATION {
 		if def.Value == s {
 			return def, true

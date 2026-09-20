@@ -176,7 +176,7 @@ func (s *Scanner) readOperator() (TokenOperator, error) {
 			return false, ErrTokenTooLong
 		}
 
-		if _, isOper := IsOperator(str); isOper {
+		if _, isOper := isOperator(str); isOper {
 			return false, nil
 		}
 
@@ -192,7 +192,7 @@ func (s *Scanner) readPunctuation() (TokenPunctuation, error) {
 			return false, ErrTokenTooLong
 		}
 
-		if _, isPunc := IsPunctuation(str); isPunc {
+		if _, isPunc := isPunctuation(str); isPunc {
 			return false, nil
 		}
 
