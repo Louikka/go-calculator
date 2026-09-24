@@ -25,7 +25,7 @@ func Stringify(tl []Token, delimeter string) string {
 	last := len(tl) - 1
 
 	for i, t := range tl {
-		a := t.ToString()
+		a := t.String()
 
 		if i < last {
 			a += delimeter

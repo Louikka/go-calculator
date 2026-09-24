@@ -106,7 +106,7 @@ func unUnaryExpression(expr []scanner.Token) ([]scanner.Token, error) {
 	out := []scanner.Token{}
 
 	tryAppend := func(oper scanner.TokenOperator) error {
-		if oper.IsUnary() {
+		if oper.CanBeUnary() {
 			out = append(out, scanner.NewTokenNumber(0))
 			return nil
 		} else {

@@ -8,7 +8,7 @@ type Token interface {
 	// String representation of a token type.
 	Type() string
 	// String representation of a token value.
-	ToString() string
+	String() string
 }
 
 // Invalid token //----------------------------------------------------------//
@@ -17,11 +17,15 @@ type TokenInvalid struct {
 	//
 }
 
+func NewTokenInvalid() TokenInvalid {
+	return TokenInvalid{}
+}
+
 func (t TokenInvalid) Type() string {
 	return "INVALID"
 }
 
-func (t TokenInvalid) ToString() string {
+func (t TokenInvalid) String() string {
 	return ""
 }
 
@@ -41,7 +45,7 @@ func (t TokenNumber) Type() string {
 	return "NUMBER"
 }
 
-func (t TokenNumber) ToString() string {
+func (t TokenNumber) String() string {
 	return strconv.FormatFloat(t.Value, 'f', -1, 64)
 }
 
@@ -74,7 +78,7 @@ func (t TokenWord) Type() string {
 	}
 }
 
-func (t TokenWord) ToString() string {
+func (t TokenWord) String() string {
 	return t.Value
 }
 
@@ -105,11 +109,11 @@ func (t TokenOperator) Type() string {
 	return "OPERATOR"
 }
 
-func (t TokenOperator) ToString() string {
+func (t TokenOperator) String() string {
 	return t.Value
 }
 
-func (t TokenOperator) IsUnary() bool {
+func (t TokenOperator) CanBeUnary() bool {
 	return t.Value == "+" || t.Value == "-"
 }
 
@@ -129,7 +133,7 @@ func (t TokenPunctuation) Type() string {
 	return "PUNCTUATION"
 }
 
-func (t TokenPunctuation) ToString() string {
+func (t TokenPunctuation) String() string {
 	return t.Value
 }
 
