@@ -229,8 +229,8 @@ func TestScanner_ReadNumber(t *testing.T) {
 		if err != nil {
 			t.Errorf("(case no.%d) error => %s", i, err)
 		}
-		if n.ToString() != test.expected {
-			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, n.ToString())
+		if n.String() != test.expected {
+			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, n.String())
 		}
 	}
 }
@@ -284,8 +284,8 @@ func TestScanner_ReadWord(t *testing.T) {
 		if err != nil {
 			t.Errorf("(case no.%d) error => %s", i, err)
 		}
-		if w.ToString() != test.expected {
-			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, w.ToString())
+		if w.String() != test.expected {
+			t.Errorf("(case no.%d) => expected %s, got %s", i, test.expected, w.String())
 		}
 		if w.Kind != test.kind {
 			t.Errorf("(case no.%d) => expected word of kind \"%s\", got \"%s\"", i, test.kind, w.Kind)
