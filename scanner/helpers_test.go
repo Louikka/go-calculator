@@ -2,8 +2,58 @@ package scanner
 
 import "testing"
 
+type lenHelper struct {
+	s string
+}
+
+func (h lenHelper) Len() int {
+	return len(h.s)
+}
+
+func TestLongestLen(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []Lener
+		expected int
+	}{
+		{
+			input: []Lener{
+				lenHelper{},
+			},
+			expected: 0,
+		},
+		{
+			input: []Lener{
+				lenHelper{s: ""},
+				lenHelper{s: "a"},
+				lenHelper{s: "ab"},
+			},
+			expected: 2,
+		},
+		{
+			input: []Lener{
+				lenHelper{s: "asdjk"},
+				lenHelper{s: "12s1dfd"},
+				lenHelper{s: "s"},
+				lenHelper{s: "da1"},
+			},
+			expected: 7,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := LongestLen(tt.input)
+			if l != tt.expected {
+				t.Errorf("got %d, expected %d", l, tt.expected)
+			}
+		})
+	}
+}
+
 func TestStringify(t *testing.T) {
 	tests := []struct {
+		name     string
 		input    []Token
 		delim    string
 		expected string
@@ -33,11 +83,12 @@ func TestStringify(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
-		s := Stringify(test.input, test.delim)
-
-		if s != test.expected {
-			t.Errorf("(case no.%d) => got \"%s\", expected \"%s\"", i, s, test.expected)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := Stringify(tt.input, tt.delim)
+			if s != tt.expected {
+				t.Errorf("got %s, expected %s", s, tt.expected)
+			}
+		})
 	}
 }
