@@ -2,11 +2,11 @@ package scanner
 
 import "strings"
 
-type HaveLenMethod interface {
+type Lener interface {
 	Len() int
 }
 
-func LongestLen[T HaveLenMethod](ol []T) int {
+func LongestLen[T Lener](ol []T) int {
 	l := 0
 
 	for _, o := range ol {
