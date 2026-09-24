@@ -49,5 +49,5 @@ func isPunctuationStart(b byte) bool {
 }
 
 func isLeftParenthesis(b byte) bool {
-	return string(b) == "("
+	return b == '('
 }
