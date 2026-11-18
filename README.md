@@ -31,6 +31,15 @@ In addition, various functions and constants are also availible.
 The program also supports flags.
 - `-r` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
 
+
+## Building
+
+```sh
+$ go build
+```
+
+
 ## ToDo
 
-- Add more tests.
+- maybe add some syntactic sugar (e.g. factorial)
+- add more tests
