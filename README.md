@@ -41,5 +41,4 @@ $ go build
 
 ## ToDo
 
-- maybe add some syntactic sugar (e.g. factorial)
 - add more tests
