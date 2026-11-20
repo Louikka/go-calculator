@@ -14,7 +14,17 @@ type _VarCtx struct {
 }
 
 func solveNodeIdentifier(node parser.NodeIdentifier, varCtx []_VarCtx) (float64, error) {
-	def, isConst := IsConstant(node.Name)
+	isConstant := func(name string) (ConstantDefinition, bool) {
+		for _, def := range DEFINED_CONSTANTS {
+			if def.Name == name {
+				return def, true
+			}
+		}
+
+		return ConstantDefinition{}, false
+	}
+
+	def, isConst := isConstant(node.Name)
 	if isConst {
 		return def.Value, nil
 	}
@@ -145,6 +155,41 @@ func solveNodeFuncCall(node parser.NodeFuncCall, varCtx []_VarCtx) (float64, err
 	}
 }
 
+func solveNodeUnary(node parser.NodeUnary, varCtx []_VarCtx) (float64, error) {
+	n, err := solveNode(node.Expr, varCtx)
+	if err != nil {
+		return 0, err
+	}
+
+	switch node.Operator {
+	case "+":
+		return +n, nil
+
+	case "-":
+		return -n, nil
+
+	case "!":
+		// check if n is positive integer
+		if n < 0 || n != math.Trunc(n) {
+			return 0, fmt.Errorf("factorial expected a non-negative integer")
+		}
+
+		if n == 0 {
+			return 1, nil
+		}
+
+		var r float64 = 1
+		for i := 1.0; i <= n; i++ {
+			r *= i
+		}
+
+		return r, nil
+
+	default:
+		return 0, fmt.Errorf("undefined unary operator %q", node.Operator)
+	}
+}
+
 func solveNodeBinary(node parser.NodeBinary, varCtx []_VarCtx) (float64, error) {
 	left, err := solveNode(node.Left, varCtx)
 	if err != nil {
@@ -179,7 +224,7 @@ func solveNodeBinary(node parser.NodeBinary, varCtx []_VarCtx) (float64, error) 
 		return 0, fmt.Errorf("range operator is unsolvable")
 
 	default:
-		return 0, fmt.Errorf("undefined operator %q", node.Operator)
+		return 0, fmt.Errorf("undefined binary operator %q", node.Operator)
 	}
 }
 
@@ -193,6 +238,9 @@ func solveNode(node parser.Node, varCtx []_VarCtx) (float64, error) {
 
 	case parser.NodeFuncCall:
 		return solveNodeFuncCall(nt, varCtx)
+
+	case parser.NodeUnary:
+		return solveNodeUnary(nt, varCtx)
 
 	case parser.NodeBinary:
 		return solveNodeBinary(nt, varCtx)
@@ -211,12 +259,12 @@ func EvaluateAST(ast parser.NodeRoot) (float64, error) {
 func EvaluateString(s string) (float64, error) {
 	tl, err := scanner.Scan(s)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("scanner: %s.", err)
 	}
 
 	ast, err := parser.Parse(tl)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("parser: %s.", err)
 	}
 
 	return EvaluateAST(ast)

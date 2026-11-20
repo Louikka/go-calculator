@@ -56,6 +56,11 @@ var DEFINED_OPERATORS = []OperatorDefinition{
 		Precedence:    4,
 		Associativity: ASSOC_LEFT,
 	},
+	{
+		Value:         "!",
+		Precedence:    3,
+		Associativity: ASSOC_UNDEFINED,
+	},
 }
 
 func isOperator(s string) (OperatorDefinition, bool) {

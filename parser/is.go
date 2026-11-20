@@ -10,7 +10,7 @@ func isBinary(expr []scanner.Token) bool {
 	for i, t := range expr {
 		_, isOper := t.(scanner.TokenOperator)
 		if isOper {
-			if i == 0 {
+			if i == 0 || i == len(expr)-1 {
 				// unary operators are not counting
 				continue
 			}
@@ -26,6 +26,28 @@ func isBinary(expr []scanner.Token) bool {
 					depth--
 				}
 			}
+		}
+	}
+
+	return false
+}
+
+// Checks if given expression (list of tokens) is unary (not a binary and
+// starts or ends with an operator).
+func isUnary(expr []scanner.Token) bool {
+	if isBinary(expr) {
+		return false
+	}
+
+	if len(expr) > 0 {
+		_, isOper := expr[0].(scanner.TokenOperator)
+		if isOper {
+			return true
+		}
+
+		_, isOper = expr[len(expr)-1].(scanner.TokenOperator)
+		if isOper {
+			return true
 		}
 	}
 

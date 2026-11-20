@@ -5,7 +5,40 @@ import (
 	"gocalc/scanner"
 )
 
+func parseUnary(expr []scanner.Token) (NodeUnary, error) {
+	if len(expr) == 0 {
+		return NodeUnary{}, ErrEmptyExpr
+	}
+
+	uOper, isOper := expr[0].(scanner.TokenOperator)
+	if isOper {
+		exprParsed, err := parseExpression(expr[1:])
+		if err != nil {
+			return NodeUnary{}, err
+		}
+
+		return NewNodeUnary(uOper.Value, exprParsed), nil
+	}
+
+	lastI := len(expr) - 1
+	uOper, isOper = expr[lastI].(scanner.TokenOperator)
+	if isOper {
+		exprParsed, err := parseExpression(expr[:lastI])
+		if err != nil {
+			return NodeUnary{}, err
+		}
+
+		return NewNodeUnary(uOper.Value, exprParsed), nil
+	}
+
+	return NodeUnary{}, ErrNotAnUnary
+}
+
 func parseBinary(expr []scanner.Token) (NodeBinary, error) {
+	if len(expr) == 0 {
+		return NodeBinary{}, ErrEmptyExpr
+	}
+
 	var err error = nil
 
 	for _, prec := range scanner.OperatorsPrecedenceSorted {
@@ -16,8 +49,12 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 		isLeftRead := false
 		depth := 0
 
-		for _, t := range expr {
+		for i, t := range expr {
 			tOper, isOper := t.(scanner.TokenOperator)
+			if isOper && i == 0 { // skip unary operator
+				left = append(left, t)
+				continue
+			}
 			if isOper && depth == 0 && tOper.Precedence == prec {
 				if isLeftRead {
 					left = append(left, operator)
@@ -84,11 +121,15 @@ func parseFuncArgs(expr []scanner.Token) ([]Node, error) {
 
 func parseExpression(expr []scanner.Token) (Node, error) {
 	if len(expr) == 0 {
-		return NodeInvalid{}, fmt.Errorf("empty expression")
+		return NodeInvalid{}, ErrEmptyExpr
 	}
 
 	if isBinary(expr) {
 		return parseBinary(expr)
+	}
+
+	if isUnary(expr) {
+		return parseUnary(expr)
 	}
 
 	switch t := expr[0].(type) {
@@ -126,12 +167,7 @@ func parseExpression(expr []scanner.Token) (Node, error) {
 //---------------------------------------------------------------------------//
 
 func Parse(input []scanner.Token) (NodeRoot, error) {
-	ununared, err := unUnaryExpression(input)
-	if err != nil {
-		return NodeRoot{}, err
-	}
-
-	node, err := parseExpression(ununared)
+	node, err := parseExpression(input)
 	if err != nil {
 		return NodeRoot{}, err
 	}

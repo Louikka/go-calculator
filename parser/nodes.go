@@ -103,6 +103,24 @@ func (n NodeFuncCall) Argc() int {
 	return len(n.Arguments)
 }
 
+// unary expression
+
+type NodeUnary struct {
+	Operator string
+	Expr     Node
+}
+
+func NewNodeUnary(oper string, expr Node) NodeUnary {
+	return NodeUnary{
+		Operator: oper,
+		Expr:     expr,
+	}
+}
+
+func (n NodeUnary) Type() string {
+	return "UNARY"
+}
+
 // binary expression
 
 type NodeBinary struct {
