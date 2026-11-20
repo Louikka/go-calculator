@@ -4,9 +4,10 @@ import (
 	"gocalc/scanner"
 )
 
-// Checks given token, and if it parenthesis, returns new depth. If token is
-// not a parenthesis, returns unchanged depth. Also checks for parenthesis
-// matching and returns [ErrMismatchedParenthesis] error if depth less than 0.
+// Checks given token and current depth, and if token is a parenthesis,
+// returns new depth. If token is not a parenthesis, returns unchanged depth.
+// Also checks for parenthesis matching and returns [ErrMismatchedParenthesis]
+// error if depth less than 0.
 func checkDepth(t scanner.Token, depth int) (int, error) {
 	tPunc, ok := t.(scanner.TokenPunctuation)
 	if ok {

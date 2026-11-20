@@ -2,6 +2,9 @@ package parser
 
 import "fmt"
 
+// Checks if provided node is a [NodeRange]. If it is not, then checks if it
+// is a [NodeBinary]: if not, returns [ErrNotABinary] error; if it is a binary
+// node, then tries to convert it to the range node.
 func ConvertToRange(n Node) (NodeRange, error) {
 	r, isRange := n.(NodeRange)
 	if isRange {
@@ -30,6 +33,9 @@ func ConvertToRange(n Node) (NodeRange, error) {
 	return NewNodeRange(int(start.Value), int(end.Value)), nil
 }
 
+// Checks if provided node is a [NodeAssign]. If it is not, then checks if it
+// is a [NodeBinary]: if not, returns [ErrNotABinary] error; if it is a binary
+// node, then tries to convert it to the assign node.
 func ConvertToAssign(n Node) (NodeAssign, error) {
 	a, isAssign := n.(NodeAssign)
 	if isAssign {
