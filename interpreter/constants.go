@@ -30,13 +30,3 @@ var DEFINED_CONSTANTS = []ConstantDefinition{
 		Value: psi,
 	},
 }
-
-func IsConstant(name string) (ConstantDefinition, bool) {
-	for _, def := range DEFINED_CONSTANTS {
-		if def.Name == name {
-			return def, true
-		}
-	}
-
-	return ConstantDefinition{}, false
-}
