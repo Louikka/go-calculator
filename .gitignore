@@ -2,3 +2,4 @@ bin/
 
 *.code-workspace
 *.ini
+*.exe
