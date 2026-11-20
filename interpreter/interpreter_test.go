@@ -216,6 +216,10 @@ func TestEvaluateString_Expression(t *testing.T) {
 			input:    "4e-3",
 			expected: "0.004",
 		},
+		{
+			input:    "-5!",
+			expected: "-120",
+		},
 	}
 
 	tt(t, tests)
