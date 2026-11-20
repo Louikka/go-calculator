@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"gocalc/scanner"
 )
 
@@ -99,45 +98,4 @@ func sliceTokenListByComma(tl []scanner.Token) ([][]scanner.Token, error) {
 	}
 
 	return groups, nil
-}
-
-// Converts unary operations to binary (e.g. "-1" to "0 - 1").
-func unUnaryExpression(expr []scanner.Token) ([]scanner.Token, error) {
-	out := []scanner.Token{}
-
-	tryAppend := func(oper scanner.TokenOperator) error {
-		if oper.CanBeUnary() {
-			out = append(out, scanner.NewTokenNumber(0))
-			return nil
-		} else {
-			return fmt.Errorf("operator %q cannot be unary", oper.Value)
-		}
-	}
-
-	for i, t := range expr {
-		oper, isOper := t.(scanner.TokenOperator)
-		if isOper {
-			if i == 0 {
-				// first token in list
-				err := tryAppend(oper)
-				if err != nil {
-					return out, err
-				}
-
-			} else /* i > 0 */ {
-				punc, isPunc := expr[i-1].(scanner.TokenPunctuation)
-				if isPunc && punc.Value == "(" {
-					// first token after left parenthesis
-					err := tryAppend(oper)
-					if err != nil {
-						return out, err
-					}
-				}
-			}
-		}
-
-		out = append(out, t)
-	}
-
-	return out, nil
 }
