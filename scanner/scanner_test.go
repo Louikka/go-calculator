@@ -335,6 +335,8 @@ func TestScannerOutputErrors(t *testing.T) {
 		"SIN(5) / 6",
 		"7 ^ 8",
 		"ABS(-9)",
+		"5!",
+		"(18 - 7)!",
 	}
 
 	for _, test := range tests {

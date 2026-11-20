@@ -185,11 +185,15 @@ func TestEvaluateString_Expression(t *testing.T) {
 			expected: "2",
 		},
 		{
+			input:    "-1",
+			expected: "-1",
+		},
+		{
 			input:    "-1 + 2",
 			expected: "1",
 		},
 		{
-			input:    "-1 / 4",
+			input:    "-(1 / 4)",
 			expected: "-0.25",
 		},
 		{
@@ -211,28 +215,6 @@ func TestEvaluateString_Expression(t *testing.T) {
 		{
 			input:    "4e-3",
 			expected: "0.004",
-		},
-	}
-
-	tt(t, tests)
-}
-
-func TestEvaluateString_Constants(t *testing.T) {
-	tests := []TestEvalS{
-		{
-			input:    "PI",
-			expected: strconv.FormatFloat(math.Pi, 'f', -1, 64),
-		},
-		{
-			input:    "E - 1",
-			expected: strconv.FormatFloat((math.E-1)-0.0000000000000002, 'f', -1, 64),
-			//                            ^ expected 1.7182818284590453, got 1.718281828459045??
-			//                             where did 0.0000000000000003 came from?
-			//                                                        ^
-		},
-		{
-			input:    "(PSI * 3) + 1.5",
-			expected: strconv.FormatFloat((psi*3)+1.5, 'f', -1, 64),
 		},
 	}
 

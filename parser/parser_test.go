@@ -6,6 +6,54 @@ import (
 	"testing"
 )
 
+func TestParseUnary(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected NodeUnary
+	}{
+		{
+			input: "+1",
+			expected: NewNodeUnary(
+				"+",
+				NewNodeNumber(1),
+			),
+		},
+		{
+			input: "-2.3",
+			expected: NodeUnary{
+				Operator: "-",
+				Expr: NodeNumber{
+					Value: 2.3,
+				},
+			},
+		},
+		{
+			input: "4!",
+			expected: NodeUnary{
+				Operator: "!",
+				Expr: NodeNumber{
+					Value: 4,
+				},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		expr, err := scanner.Scan(test.input)
+		if err != nil {
+			t.Errorf("(%d) scanner error => %s", i+1, err)
+		}
+
+		node, err := parseUnary(expr)
+		if err != nil {
+			t.Errorf("(%d) error => %s", i+1, err)
+		}
+		if !reflect.DeepEqual(node, test.expected) {
+			t.Errorf("(%d) nodes not matching => %+v", i+1, node)
+		}
+	}
+}
+
 func TestParseBinary(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -20,6 +68,36 @@ func TestParseBinary(t *testing.T) {
 				},
 				Right: NodeNumber{
 					Value: 2,
+				},
+			},
+		},
+		{
+			input: "-1 + 2",
+			expected: NodeBinary{
+				Operator: "+",
+				Left: NodeUnary{
+					Operator: "-",
+					Expr: NodeNumber{
+						Value: 1,
+					},
+				},
+				Right: NodeNumber{
+					Value: 2,
+				},
+			},
+		},
+		{
+			input: "1 - 2!",
+			expected: NodeBinary{
+				Operator: "-",
+				Left: NodeNumber{
+					Value: 1,
+				},
+				Right: NodeUnary{
+					Operator: "!",
+					Expr: NodeNumber{
+						Value: 2,
+					},
 				},
 			},
 		},
@@ -222,12 +300,56 @@ func TestParseExpression(t *testing.T) {
 			),
 		},
 		{
+			input: "-1 + 2 * 3!",
+			expected: NewNodeBinary(
+				"+",
+				NewNodeUnary(
+					"-",
+					NewNodeNumber(1),
+				),
+				NewNodeBinary(
+					"*",
+					NewNodeNumber(2),
+					NewNodeUnary(
+						"!",
+						NewNodeNumber(3),
+					),
+				),
+			),
+		},
+		{
 			input:    "PI",
 			expected: NewNodeIdentifier("PI"),
 		},
 		{
 			input:    "F ( )",
 			expected: NewNodeFuncCall("F", []Node{}),
+		},
+		{
+			input: "-1 /4",
+			expected: NewNodeBinary(
+				"/",
+				NewNodeUnary(
+					"-",
+					NewNodeNumber(1),
+				),
+				NewNodeNumber(4),
+			),
+		},
+		{
+			input: "-1 / 4 + 0.25",
+			expected: NewNodeBinary(
+				"+",
+				NewNodeBinary(
+					"/",
+					NewNodeUnary(
+						"-",
+						NewNodeNumber(1),
+					),
+					NewNodeNumber(4),
+				),
+				NewNodeNumber(0.25),
+			),
 		},
 	}
 
