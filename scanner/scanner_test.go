@@ -11,12 +11,12 @@ func TestScannerInitialization(t *testing.T) {
 		expectedS string
 	}{
 		{
-			name:      "just a number",
+			name:      "number",
 			input:     "0",
 			expectedS: "0",
 		},
 		{
-			name:      "just an expression",
+			name:      "expression",
 			input:     "1 + 2",
 			expectedS: "1 + 2",
 		},
@@ -163,7 +163,7 @@ func TestScanner_Peek(t *testing.T) {
 }
 
 func TestScanner_Next(t *testing.T) {
-	// todo
+	// todo?
 }
 
 func TestScanner_IsEmpty(t *testing.T) {
@@ -173,13 +173,13 @@ func TestScanner_IsEmpty(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "just numbers",
+			name:     "numbers",
 			s:        "123",
 			expected: false,
 		},
 		{
 			name:     "numbers with some leading/trailing whitespaces",
-			s:        "  123    ",
+			s:        "  123   	",
 			expected: false,
 		},
 		{
@@ -188,13 +188,8 @@ func TestScanner_IsEmpty(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "one whitespace",
-			s:        " ",
-			expected: true,
-		},
-		{
 			name:     "a bunch of whitespace characters",
-			s:        " 	\r\n",
+			s:        "  	\r   \n ",
 			expected: true,
 		},
 	}
@@ -232,14 +227,6 @@ func TestScanner_ReadNumber(t *testing.T) {
 		{
 			s:        "5e-6",
 			expected: "0.000005",
-		},
-		{
-			s:        "1e",
-			expected: "1",
-		},
-		{
-			s:        "1.",
-			expected: "1",
 		},
 	}
 

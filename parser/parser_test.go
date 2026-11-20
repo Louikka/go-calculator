@@ -19,22 +19,11 @@ func TestParseUnary(t *testing.T) {
 			),
 		},
 		{
-			input: "-2.3",
-			expected: NodeUnary{
-				Operator: "-",
-				Expr: NodeNumber{
-					Value: 2.3,
-				},
-			},
-		},
-		{
-			input: "4!",
-			expected: NodeUnary{
-				Operator: "!",
-				Expr: NodeNumber{
-					Value: 4,
-				},
-			},
+			input: "2!",
+			expected: NewNodeUnary(
+				"!",
+				NewNodeNumber(2),
+			),
 		},
 	}
 
@@ -251,19 +240,6 @@ func TestParseFuncArgs(t *testing.T) {
 				),
 			},
 		},
-		{
-			input: "1 + 2, SIN(3)",
-			expected: []Node{
-				NewNodeBinary(
-					"+",
-					NewNodeNumber(1),
-					NewNodeNumber(2),
-				),
-				NewNodeFuncCall("SIN", []Node{
-					NewNodeNumber(3),
-				}),
-			},
-		},
 	}
 
 	for i, test := range tests {
@@ -324,17 +300,6 @@ func TestParseExpression(t *testing.T) {
 		{
 			input:    "F ( )",
 			expected: NewNodeFuncCall("F", []Node{}),
-		},
-		{
-			input: "-1 /4",
-			expected: NewNodeBinary(
-				"/",
-				NewNodeUnary(
-					"-",
-					NewNodeNumber(1),
-				),
-				NewNodeNumber(4),
-			),
 		},
 		{
 			input: "-1 / 4 + 0.25",

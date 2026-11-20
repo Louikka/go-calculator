@@ -41,7 +41,7 @@ func parseBinary(expr []scanner.Token) (NodeBinary, error) {
 
 	var err error = nil
 
-	for _, prec := range scanner.OperatorsPrecedenceSorted {
+	for _, prec := range scanner.SortOperatorsByPrecedence() {
 		var operator scanner.TokenOperator
 		left := []scanner.Token{}
 		right := []scanner.Token{}

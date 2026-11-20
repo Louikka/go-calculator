@@ -57,9 +57,9 @@ var DEFINED_OPERATORS = []OperatorDefinition{
 		Associativity: ASSOC_LEFT,
 	},
 	{
-		Value:         "!",
-		Precedence:    3,
-		Associativity: ASSOC_UNDEFINED,
+		Value:      "!",
+		Precedence: 3,
+		// associativity for unary operators are not necessary
 	},
 }
 
@@ -73,10 +73,7 @@ func isOperator(s string) (OperatorDefinition, bool) {
 	return OperatorDefinition{}, false
 }
 
-// Length of the longest operator (in bytes).
-var LongestOperatorLen = LongestLen(DEFINED_OPERATORS)
-
-var OperatorsPrecedenceSorted = func() []int {
+func SortOperatorsByPrecedence() []int {
 	l := []int{}
 
 	for _, oper := range DEFINED_OPERATORS {
@@ -88,7 +85,7 @@ var OperatorsPrecedenceSorted = func() []int {
 	slices.Sort(l)
 
 	return l
-}()
+}
 
 // Punctuation //------------------------------------------------------------//
 
@@ -121,6 +118,3 @@ func isPunctuation(s string) (PunctuationDefinition, bool) {
 
 	return PunctuationDefinition{}, false
 }
-
-// Length of the longest punctuation (in bytes).
-var LongestPunctuationLen = LongestLen(DEFINED_PUCTUATION)

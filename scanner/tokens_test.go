@@ -2,15 +2,15 @@ package scanner
 
 import "testing"
 
-func testInterfaceMethods(t *testing.T, token Token, typeExpected, stringExpected string) {
+func testInterfaceMethods(t *testing.T, token Token, expectedType, expectedString string) {
 	tokenType := token.Type()
-	if tokenType != typeExpected {
-		t.Errorf("%T -> Type() -> got %q, expected %q", token, tokenType, typeExpected)
+	if tokenType != expectedType {
+		t.Errorf("%T -> Type() -> got %q, expected %q", token, tokenType, expectedType)
 	}
 
 	tokenString := token.String()
-	if tokenString != stringExpected {
-		t.Errorf("%T -> String() -> got %q, expected %q", token, tokenString, stringExpected)
+	if tokenString != expectedString {
+		t.Errorf("%T -> String() -> got %q, expected %q", token, tokenString, expectedString)
 	}
 }
 
@@ -63,56 +63,48 @@ func TestTokenWord(t *testing.T) {
 }
 
 func TestTokenOperatro(t *testing.T) {
+	expectedType := "OPERATOR"
+
 	tests := []struct {
 		name                  string
 		token                 TokenOperator
 		expectedPrecedence    int
 		expectedAssociativity string
-		expectedType          string
 		expectedString        string
-		expectedCanBeUnary    bool
 	}{
 		{
 			name:                  "plus",
 			token:                 NewTokenOperator("+"),
 			expectedPrecedence:    1,
 			expectedAssociativity: ASSOC_LEFT,
-			expectedType:          "OPERATOR",
 			expectedString:        "+",
-			expectedCanBeUnary:    true,
 		},
 		{
 			name:                  "slash",
 			token:                 NewTokenOperator("/"),
 			expectedPrecedence:    2,
 			expectedAssociativity: ASSOC_LEFT,
-			expectedType:          "OPERATOR",
 			expectedString:        "/",
-			expectedCanBeUnary:    false,
 		},
 		{
 			name:                  "caret",
 			token:                 NewTokenOperator("^"),
 			expectedPrecedence:    3,
 			expectedAssociativity: ASSOC_RIGHT,
-			expectedType:          "OPERATOR",
 			expectedString:        "^",
-			expectedCanBeUnary:    false,
 		},
 		{
 			name:                  "not an operator",
 			token:                 NewTokenOperator("NOT_OPERATOR"),
 			expectedPrecedence:    0,
 			expectedAssociativity: ASSOC_UNDEFINED,
-			expectedType:          "OPERATOR",
 			expectedString:        "NOT_OPERATOR",
-			expectedCanBeUnary:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testInterfaceMethods(t, tt.token, tt.expectedType, tt.expectedString)
+			testInterfaceMethods(t, tt.token, expectedType, tt.expectedString)
 
 			prec := tt.token.Precedence
 			if prec != tt.expectedPrecedence {
@@ -123,41 +115,34 @@ func TestTokenOperatro(t *testing.T) {
 			if assoc != tt.expectedAssociativity {
 				t.Errorf("%T -> Associativity -> got %q, expected %q", tt.token, assoc, tt.expectedAssociativity)
 			}
-
-			canBeUnary := tt.token.CanBeUnary()
-			if canBeUnary != tt.expectedCanBeUnary {
-				t.Errorf("%T -> CanBeUnary() -> got %t, expected %t", tt.token, canBeUnary, tt.expectedCanBeUnary)
-			}
 		})
 	}
 }
 
 func TestTokenPunctuation(t *testing.T) {
+	expectedType := "PUNCTUATION"
+
 	tests := []struct {
 		name             string
 		token            TokenPunctuation
-		expectedType     string
 		expectedString   string
 		expectedIsLParen bool
 	}{
 		{
 			name:             "lparen",
 			token:            NewTokenPunctuation("("),
-			expectedType:     "PUNCTUATION",
 			expectedString:   "(",
 			expectedIsLParen: true,
 		},
 		{
 			name:             "rparen",
 			token:            NewTokenPunctuation(")"),
-			expectedType:     "PUNCTUATION",
 			expectedString:   ")",
 			expectedIsLParen: false,
 		},
 		{
 			name:             "comma",
 			token:            NewTokenPunctuation(","),
-			expectedType:     "PUNCTUATION",
 			expectedString:   ",",
 			expectedIsLParen: false,
 		},
@@ -165,7 +150,7 @@ func TestTokenPunctuation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testInterfaceMethods(t, tt.token, tt.expectedType, tt.expectedString)
+			testInterfaceMethods(t, tt.token, expectedType, tt.expectedString)
 
 			isLParen := tt.token.IsLeftParenthesis()
 			if isLParen != tt.expectedIsLParen {

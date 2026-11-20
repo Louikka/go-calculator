@@ -113,10 +113,6 @@ func (t TokenOperator) String() string {
 	return t.Value
 }
 
-func (t TokenOperator) CanBeUnary() bool {
-	return t.Value == "+" || t.Value == "-"
-}
-
 // Punctuation token //------------------------------------------------------//
 
 type TokenPunctuation struct {

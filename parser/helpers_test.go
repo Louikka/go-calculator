@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+// TODO: create tests for checkDepth()
+
+// TODO: create tests for readParentheses()
+
 func TestSliceTokenListByComma(t *testing.T) {
 	tests := []struct {
 		input    string

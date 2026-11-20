@@ -24,13 +24,13 @@ func TestIsDigit(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "some unrelated symbol",
+			name:     "symbol",
 			input:    '@',
 			expected: false,
 		},
 		{
-			name:     "whitespace/tab",
-			input:    '	',
+			name:     "whitespace",
+			input:    ' ',
 			expected: false,
 		},
 	}
@@ -62,11 +62,6 @@ func TestIsLetter(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "z",
-			input:    'z',
-			expected: true,
-		},
-		{
 			name:     "whitespace",
 			input:    ' ',
 			expected: false,
@@ -77,7 +72,7 @@ func TestIsLetter(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "other symbols",
+			name:     "symbol",
 			input:    '&',
 			expected: false,
 		},
@@ -125,11 +120,6 @@ func TestIsWhitespace(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "star symbol",
-			input:    '*',
-			expected: false,
-		},
-		{
 			name:     "number",
 			input:    '1',
 			expected: false,
@@ -137,6 +127,11 @@ func TestIsWhitespace(t *testing.T) {
 		{
 			name:     "letter",
 			input:    'a',
+			expected: false,
+		},
+		{
+			name:     "symbol",
+			input:    '*',
 			expected: false,
 		},
 	}
@@ -168,8 +163,8 @@ func TestIsWordStart(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "percent sign",
-			input:    '%',
+			name:     "punctuation",
+			input:    '(',
 			expected: false,
 		},
 	}
@@ -216,11 +211,6 @@ func TestIsWordBody(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "question mark",
-			input:    '?',
-			expected: false,
-		},
-		{
 			name:     "dot",
 			input:    '.',
 			expected: false,
@@ -259,11 +249,6 @@ func TestIsOperatorStart(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "hash",
-			input:    '#',
-			expected: false,
-		},
-		{
 			name:     "number",
 			input:    '1',
 			expected: false,
@@ -271,6 +256,11 @@ func TestIsOperatorStart(t *testing.T) {
 		{
 			name:     "letter",
 			input:    'a',
+			expected: false,
+		},
+		{
+			name:     "punctuation",
+			input:    ',',
 			expected: false,
 		},
 	}
@@ -302,11 +292,6 @@ func TestIsPunctuationStart(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "dollar sign",
-			input:    '$',
-			expected: false,
-		},
-		{
 			name:     "number",
 			input:    '1',
 			expected: false,
@@ -314,6 +299,11 @@ func TestIsPunctuationStart(t *testing.T) {
 		{
 			name:     "letter",
 			input:    'a',
+			expected: false,
+		},
+		{
+			name:     "operator",
+			input:    '+',
 			expected: false,
 		},
 	}

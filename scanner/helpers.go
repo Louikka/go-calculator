@@ -2,23 +2,6 @@ package scanner
 
 import "strings"
 
-type Lener interface {
-	Len() int
-}
-
-func LongestLen[T Lener](ol []T) int {
-	l := 0
-
-	for _, o := range ol {
-		new := o.Len()
-		if new > l {
-			l = new
-		}
-	}
-
-	return l
-}
-
 func Stringify(tl []Token, delimeter string) string {
 	var s strings.Builder
 

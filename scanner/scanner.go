@@ -171,8 +171,16 @@ func (s *Scanner) readWord() (TokenWord, error) {
 }
 
 func (s *Scanner) readOperator() (TokenOperator, error) {
+	longestOperatorLiteralLen := 0
+	for _, o := range DEFINED_OPERATORS {
+		new := len(o.Value)
+		if new > longestOperatorLiteralLen {
+			longestOperatorLiteralLen = new
+		}
+	}
+
 	o, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > LongestOperatorLen {
+		if len(str) > longestOperatorLiteralLen {
 			return false, ErrTokenTooLong
 		}
 
@@ -187,8 +195,16 @@ func (s *Scanner) readOperator() (TokenOperator, error) {
 }
 
 func (s *Scanner) readPunctuation() (TokenPunctuation, error) {
+	longestPunctuationLiteralLen := 0
+	for _, p := range DEFINED_PUCTUATION {
+		new := len(p.Value)
+		if new > longestPunctuationLiteralLen {
+			longestPunctuationLiteralLen = new
+		}
+	}
+
 	p, err := s.readwhile(func(_, _, _ byte, str string) (bool, error) {
-		if len(str) > LongestPunctuationLen {
+		if len(str) > longestPunctuationLiteralLen {
 			return false, ErrTokenTooLong
 		}
 
