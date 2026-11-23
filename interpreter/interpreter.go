@@ -39,111 +39,80 @@ func solveNodeIdentifier(node parser.NodeIdentifier, varCtx []_VarCtx) (float64,
 }
 
 func solveNodeFuncCall(node parser.NodeFuncCall, varCtx []_VarCtx) (float64, error) {
-	fnname := node.Name
-	argc := node.Argc()
+	switch node.Name {
+	case "SIN":
+		return commonfunc1(node, varCtx, math.Sin)
 
-	// helper for common functions without arguments
-	commonfunc0 := func(fn func() float64) (float64, error) {
-		if argc != 0 {
-			return 0, fmt.Errorf("%s expected 0 arguments, but got %d", fnname, argc)
-		}
+	case "COS":
+		return commonfunc1(node, varCtx, math.Cos)
 
-		return fn(), nil
-	}
+	case "TAN":
+		return commonfunc1(node, varCtx, math.Tan)
 
-	// helper for common functions with 1 argument
-	commonfunc1 := func(fn func(float64) float64) (float64, error) {
-		if argc != 1 {
-			return 0, fmt.Errorf("%s expected 1 argument, but got %d", fnname, argc)
-		}
+	case "ATAN":
+		return commonfunc1(node, varCtx, math.Atan)
 
-		arg, err := solveNode(node.Arguments[0], varCtx)
+	case "ABS":
+		return commonfunc1(node, varCtx, math.Abs)
+
+	case "LOG":
+		err := checkFuncCallArgc(node, 2)
 		if err != nil {
 			return 0, err
 		}
 
-		return fn(arg), nil
-	}
-
-	// helper for SUM/PROD functions
-	// fn is a cumulative function that takes total value and result of
-	// the current iteration
-	rfunc2 := func(fn func(float64, float64) float64) (float64, error) {
-		if argc != 2 {
-			return 0, fmt.Errorf("%s expected 2 arguments, but got %d", fnname, argc)
-		}
-
-		ass, err := parser.ConvertToAssign(node.Arguments[0])
+		arg1, err := solveNode(node.Arguments[0], varCtx)
 		if err != nil {
-			return 0, fmt.Errorf("%s: first argument error: %s", fnname, err)
+			return 0, fmt.Errorf("%s cannot solve its 1st argument: %s", node.Name, err)
 		}
 
-		assRange, err := parser.ConvertToRange(ass.Expr)
+		if arg1 <= 0 {
+			return 0, fmt.Errorf("logarithm base must be positive")
+		}
+		if arg1 == 1 {
+			return 0, fmt.Errorf("logarithm base cannot be 1")
+		}
+
+		arg2, err := solveNode(node.Arguments[1], varCtx)
 		if err != nil {
-			return 0, fmt.Errorf("%s: first argument expression assignment error: %s", fnname, err)
+			return 0, fmt.Errorf("%s cannot solve its 2nd argument: %s", node.Name, err)
 		}
 
-		expr := node.Arguments[1]
-
-		var cum float64 = 0
-		for i := assRange.Start; i <= assRange.End; i++ {
-			iterResult, err := solveNode(expr, []_VarCtx{
-				{
-					Name:  ass.Var.Name,
-					Value: float64(i),
-				},
-			})
-			if err != nil {
-				return cum, err
-			}
-
-			cum = fn(cum, iterResult)
+		if arg2 <= 0 {
+			return 0, fmt.Errorf("logarithm argument must be positive")
 		}
 
-		return cum, nil
-	}
-
-	switch fnname {
-	case "SIN":
-		return commonfunc1(math.Sin)
-
-	case "COS":
-		return commonfunc1(math.Cos)
-
-	case "TAN":
-		return commonfunc1(math.Tan)
-
-	case "ATAN":
-		return commonfunc1(math.Atan)
-
-	case "ABS":
-		return commonfunc1(math.Abs)
-
-	case "LOG":
-		return commonfunc1(math.Log10)
+		return math.Log(arg2) / math.Log(arg1), nil
 
 	case "LN":
-		return commonfunc1(math.Log)
+		// TODO: fix possible NaN values (if argument is negative)
+		return commonfunc1(node, varCtx, math.Log)
 
 	case "SQRT":
-		return commonfunc1(math.Sqrt)
+		// TODO: fix possible NaN values (if argument is negative)
+		return commonfunc1(node, varCtx, math.Sqrt)
 
 	case "CBRT":
-		return commonfunc1(math.Cbrt)
+		return commonfunc1(node, varCtx, math.Cbrt)
 
 	case "ROUND":
-		return commonfunc1(math.Round)
+		return commonfunc1(node, varCtx, math.Round)
 
 	case "RAND":
-		return commonfunc0(rand.Float64)
+		err := checkFuncCallArgc(node, 0)
+		if err != nil {
+			return 0, err
+		}
+
+		return rand.Float64(), nil
 
 	case "SUM":
-		return rfunc2(func(cum, i float64) float64 {
+		return ibofunc(node, varCtx, func(cum, i float64) float64 {
 			return cum + i
 		})
 
 	case "PROD":
-		return rfunc2(func(cum, i float64) float64 {
+		return ibofunc(node, varCtx, func(cum, i float64) float64 {
 			if cum == 0 {
 				cum = 1
 			}
@@ -246,7 +215,7 @@ func solveNode(node parser.Node, varCtx []_VarCtx) (float64, error) {
 		return solveNodeBinary(nt, varCtx)
 
 	default:
-		return 0, fmt.Errorf("undefined node %q", node.Type())
+		panic(fmt.Sprintf("cannot solve node %q", node.Type()))
 	}
 }
 

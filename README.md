@@ -3,7 +3,7 @@
 Terminal calculator (yes, seriously) written in Go language.
 
 
-Allowed operations are *addition* (`+`), *subtraction* (`-`), *multiplication* (`*`), *division* (`/`) and *raising to a power* (`^`).
+Allowed operations are *addition* (`+`), *subtraction*/*negation* (`-`), *multiplication* (`*`), *division* (`/`), *raising to a power* (`^`) and *factorial* (`!`).
 
 
 In addition, various functions and constants are also availible.
@@ -18,14 +18,14 @@ In addition, various functions and constants are also availible.
     - `TAN(x)` — tangent function, argument should be expressed in radian measure.
     - `ATAN(x)` — arctangent (in radians) function.
     - `ABS(x)` — absolute value function, `ABS(x) = |x|`.
-    - `LOG(x)` — decimal logarithm.
-    - `LN(x)` — natural logarithm.
+    - `LOG(x, y)` — logarithm of `y` to the base `x`.
+    - `LN(x)` — natural logarithm, same as `LOG(E, x)`.
     - `SQRT(x)` — square root function.
     - `CBRT(x)` — cubic root function.
     - `ROUND(x)` — rounds to the nearest integer.
     - `RAND()` — returns random floating-point number in the half-open interval [0, 1).
-    - `SUM(i=START..END, x)` — summation function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
-    - `PROD(i=START..END, x)` — product (multiplication) function, where `START` is the lower limit of the range, `END` is the upper limit of the range (both are inclusive).
+    - `SUM(i=n..m, x)` — summation function, where `i` is index variable, `n` is the lower limit of the range, `m` is the upper limit of the range (both are inclusive), `x` is an expression where usage of the index variable are permitted.
+    - `PROD(i=n..m, x)` — product (multiplication) function, where `i` is index variable, `n` is the lower limit of the range, `m` is the upper limit of the range (both are inclusive), `x` is an expression where usage of the index variable are permitted.
 
 
 The program also supports flags.
