@@ -28,8 +28,7 @@ In addition, various functions and constants are also availible.
     - `PROD(i=n..m, x)` — product (multiplication) function, where `i` is index variable, `n` is the lower limit of the range, `m` is the upper limit of the range (both are inclusive), `x` is an expression where usage of the index variable are permitted.
 
 
-The program also supports flags.
-- `-r` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
+In case of calculation errors (not related to the program itself, e.g. dividing by zero), program may return standart Go values (such as `±Inf` or `NaN`) for these cases.
 
 
 ## Building
@@ -37,6 +36,17 @@ The program also supports flags.
 ```sh
 $ go build
 ```
+
+For running tests:
+
+```sh
+$ go test ./...
+```
+
+
+## Usage
+
+- `-r` loops program until an error or stop command (`Q`, `QUIT`, `STOP`, `END`) is encountered.
 
 
 ## ToDo

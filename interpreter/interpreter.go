@@ -56,40 +56,14 @@ func solveNodeFuncCall(node parser.NodeFuncCall, varCtx []_VarCtx) (float64, err
 		return commonfunc1(node, varCtx, math.Abs)
 
 	case "LOG":
-		err := checkFuncCallArgc(node, 2)
-		if err != nil {
-			return 0, err
-		}
-
-		arg1, err := solveNode(node.Arguments[0], varCtx)
-		if err != nil {
-			return 0, fmt.Errorf("%s cannot solve its 1st argument: %s", node.Name, err)
-		}
-
-		if arg1 <= 0 {
-			return 0, fmt.Errorf("logarithm base must be positive")
-		}
-		if arg1 == 1 {
-			return 0, fmt.Errorf("logarithm base cannot be 1")
-		}
-
-		arg2, err := solveNode(node.Arguments[1], varCtx)
-		if err != nil {
-			return 0, fmt.Errorf("%s cannot solve its 2nd argument: %s", node.Name, err)
-		}
-
-		if arg2 <= 0 {
-			return 0, fmt.Errorf("logarithm argument must be positive")
-		}
-
-		return math.Log(arg2) / math.Log(arg1), nil
+		return commonfunc2(node, varCtx, func(a, b float64) float64 {
+			return math.Log(b) / math.Log(a)
+		})
 
 	case "LN":
-		// TODO: fix possible NaN values (if argument is negative)
 		return commonfunc1(node, varCtx, math.Log)
 
 	case "SQRT":
-		// TODO: fix possible NaN values (if argument is negative)
 		return commonfunc1(node, varCtx, math.Sqrt)
 
 	case "CBRT":
@@ -172,13 +146,13 @@ func solveNodeBinary(node parser.NodeBinary, varCtx []_VarCtx) (float64, error) 
 
 	switch node.Operator {
 	case "+":
-		return left + right, nil
+		return Add(left, right), nil
 
 	case "-":
-		return left - right, nil
+		return Sub(left, right), nil
 
 	case "*":
-		return left * right, nil
+		return Mul(left, right), nil
 
 	case "/":
 		return left / right, nil
